@@ -4,9 +4,9 @@ import (
 	"image"
 	_ "image/png"
 	"os"
-	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
@@ -52,6 +52,7 @@ type (
 
 var (
 	White = Color{255, 255, 255, 255}
+	Black = Color{0, 0, 0, 255}
 )
 
 func (c Color) RGBA() (r, g, b, a uint32) {
@@ -233,22 +234,96 @@ func drawImageSlice(dst *ebiten.Image, dstRect rectangle, src *ebiten.Image, c c
 	}
 }
 
+func drawRect(dst *ebiten.Image, r rectangle, clr Color) {
+	ebitenutil.DrawRect(dst, r.x, r.y, r.width, r.height, clr)
+}
+
 type (
-	minute  uint
-	seconds uint
+	minute  int
+	seconds int
 
 	timer struct {
-		min   minute
-		sec   seconds
-		timer seconds
+		running bool
+		min     minute
+		sec     seconds
+		timer   seconds
+		buf     [5]rune
 	}
 )
 
 func (t *timer) setDuration(m minute, s seconds) {
 	t.min = m
 	t.sec = s
+	t.timer = 0
+	t.updateString()
 }
 
-func (t timer) toString() string {
-	return strconv.FormatUint(uint64(t.min), 10) + " : " + strconv.FormatUint(uint64(t.sec), 10)
+func (t *timer) start() {
+	t.running = true
+}
+
+func (t *timer) advance() (finished bool) {
+	const tps = 5
+	finished = false
+	if t.running {
+		t.timer += 1
+		if t.timer == tps {
+			t.timer = 0
+			if t.sec == 0 {
+				if t.min == 0 && t.sec == 0 {
+					t.running = false
+					finished = true
+				} else {
+					t.min -= 1
+					t.sec = 59
+				}
+			} else {
+				t.sec -= 1
+			}
+			t.updateString()
+
+		}
+	}
+	return
+}
+
+func (t *timer) updateString() []rune {
+	toChar := func(n int) (r rune) {
+		if n <= 10 {
+			return rune(n + 48)
+		} else {
+			r = 0
+		}
+		return
+	}
+
+	if t.min >= 10 {
+		rem := int(t.min)
+		digit := rem % 10
+		t.buf[1] = toChar(digit)
+		rem /= 10
+		digit = rem % 10
+		t.buf[0] = toChar(digit)
+	} else {
+		t.buf[0] = '0'
+		t.buf[1] = toChar(int(t.min))
+	}
+
+	if t.sec >= 10 {
+		rem := int(t.sec)
+		digit := rem % 10
+		t.buf[4] = toChar(digit)
+		rem /= 10
+		digit = rem % 10
+		t.buf[3] = toChar(digit)
+	} else {
+		t.buf[3] = '0'
+		t.buf[4] = toChar(int(t.sec))
+	}
+	t.buf[2] = ':'
+	return t.buf[:]
+}
+
+func (t timer) toString() []rune {
+	return t.buf[:]
 }
