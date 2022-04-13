@@ -11,8 +11,6 @@ func main() {
 	todo := new(Todo)
 	todo.Init()
 
-	todo.addItem("Clean house")
-	todo.addItem("Clean desk")
 	if err := ebiten.RunGame(todo); err != nil {
 		e := err.(exitStatus)
 		if e.kind != exitNoError {

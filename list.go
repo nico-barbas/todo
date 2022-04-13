@@ -41,9 +41,9 @@ type (
 func (l *listWindow) init(font *Font, outline *ebiten.Image) {
 	l.rect = rectangle{0, 0, 200, windowHeight}
 	l.addBtnRect = rectangle{
-		x:      l.rect.x + 15,
+		x:      l.rect.x + btnPadding,
 		y:      l.rect.y + l.rect.height - textSize - (10 * 2) - 6,
-		width:  l.rect.width - (15 * 2),
+		width:  l.rect.width - (btnPadding * 2),
 		height: textSize + (10 * 2),
 	}
 

@@ -30,3 +30,7 @@ func (t *task) startWork() {
 	t.timer.setDuration(t.sessionLength, 0)
 	t.timer.start()
 }
+
+func (t task) ToString() string {
+	return "task"
+}

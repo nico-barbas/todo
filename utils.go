@@ -327,3 +327,40 @@ func (t *timer) updateString() []rune {
 func (t timer) toString() []rune {
 	return t.buf[:]
 }
+
+////////////////
+////////////////
+////////////////
+const defaultTextBoxCap = 100
+
+type textBox struct {
+	font      *Font
+	fontSize  float64
+	charBuf   []rune
+	charCount int
+	cursor    rectangle
+}
+
+func (t *textBox) init(font *Font, fontSize float64) {
+	t.font = font
+	t.fontSize = fontSize
+	t.cursor = rectangle{
+		width:  2,
+		height: textSize,
+	}
+	t.charBuf = make([]rune, defaultTextBoxCap)
+}
+
+func (t *textBox) AppendChar(r rune) {
+	t.charBuf[t.charCount] = r
+	t.charCount += 1
+	t.cursor.x += t.font.GlyphAdvance(r, t.fontSize)
+}
+
+func (t *textBox) DeleteChar() {
+	t.charCount -= 1
+}
+
+func (t *textBox) GetText() []rune {
+	return t.charBuf[:t.charCount]
+}

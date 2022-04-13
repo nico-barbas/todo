@@ -7,14 +7,18 @@ import (
 )
 
 const (
-	windowWidth  = 800
-	windowHeight = 600
-	initialCap   = 20
-	textSize     = 20
+	windowWidth   = 800
+	windowHeight  = 600
+	initialCap    = 20
+	textSize      = 20
+	smallTextSize = 14
+	btnPadding    = 15
+	btnHeight     = textSize + (10 * 2)
 )
 
 const (
 	todoAddBtnPressed SignalKind = iota
+	todoTaskAdded
 )
 
 var todo *Todo
@@ -54,8 +58,10 @@ func (t *Todo) Init() {
 	t.cap = initialCap
 	t.signals.init()
 
+	t.signals.addListener(todoTaskAdded, t)
+
 	// Resources
-	t.font = NewFont("assets/FiraSans-Regular.ttf", 72, []int{14, textSize})
+	t.font = NewFont("assets/FiraSans-Regular.ttf", 72, []int{smallTextSize, textSize})
 	t.rectOutline, _, _ = ebitenutil.NewImageFromFile("assets/uiRectOutline.png")
 
 	// List window init
@@ -76,6 +82,8 @@ func (t *Todo) Update() error {
 	mx, my := ebiten.CursorPosition()
 	mPos := point{float64(mx), float64(my)}
 	mLeft := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+
+	t.optWindow.update(mPos, mLeft)
 
 	selected := t.list.update(mPos, mLeft)
 	if selected >= 0 {
@@ -113,14 +121,15 @@ func (t *Todo) Layout(outW, outH int) (int, int) {
 	return windowWidth, windowHeight
 }
 
-func (t *Todo) addItem(name string) {
-	newTask := task{
-		name:             name,
-		done:             false,
-		sessionRequired:  5,
-		sessionCompleted: 1,
-		sessionLength:    1,
-	}
+func (t *Todo) addTask(_t task) {
+	// newTask := task{
+	// 	name:             name,
+	// 	done:             false,
+	// 	sessionRequired:  5,
+	// 	sessionCompleted: 1,
+	// 	sessionLength:    1,
+	// }
+	newTask := _t
 	newTask.init()
 	if t.count > len(t.tasks) {
 		newSlice := make([]task, t.cap*2)
@@ -130,6 +139,13 @@ func (t *Todo) addItem(name string) {
 	t.tasks = append(t.tasks, newTask)
 	t.count += 1
 	t.list.addItem()
+}
+
+func (t *Todo) OnSignal(s Signal) {
+	switch s.Kind {
+	case todoTaskAdded:
+		t.addTask(s.Value.(task))
+	}
 }
 
 // Static wrapper over the signal dispatcher
