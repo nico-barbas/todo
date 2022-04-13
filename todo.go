@@ -10,8 +10,9 @@ const (
 	windowWidth   = 800
 	windowHeight  = 600
 	initialCap    = 20
-	textSize      = 20
 	smallTextSize = 14
+	textSize      = 20
+	largeTextSize = 30
 	btnPadding    = 15
 	btnHeight     = textSize + (10 * 2)
 )
@@ -61,7 +62,7 @@ func (t *Todo) Init() {
 	t.signals.addListener(todoTaskAdded, t)
 
 	// Resources
-	t.font = NewFont("assets/FiraSans-Regular.ttf", 72, []int{smallTextSize, textSize})
+	t.font = NewFont("assets/FiraSans-Regular.ttf", 72, []int{smallTextSize, textSize, largeTextSize})
 	t.rectOutline, _, _ = ebitenutil.NewImageFromFile("assets/uiRectOutline.png")
 
 	// List window init

@@ -1,5 +1,9 @@
 package main
 
+const (
+	minSessionLength minute = 1
+)
+
 type (
 	task struct {
 		name       string

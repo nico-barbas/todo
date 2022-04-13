@@ -287,7 +287,7 @@ func (t *timer) advance() (finished bool) {
 	return
 }
 
-func (t *timer) updateString() []rune {
+func (t *timer) updateString() {
 	toChar := func(n int) (r rune) {
 		if n <= 10 {
 			return rune(n + 48)
@@ -321,11 +321,39 @@ func (t *timer) updateString() []rune {
 		t.buf[4] = toChar(int(t.sec))
 	}
 	t.buf[2] = ':'
-	return t.buf[:]
 }
 
 func (t timer) toString() []rune {
 	return t.buf[:]
+}
+
+func numberToString(n int, buf []rune) (last int) {
+	toChar := func(n int) (r rune) {
+		if n <= 10 {
+			return rune(n + 48)
+		} else {
+			r = 0
+		}
+		return
+	}
+
+	rem := n
+	if n < 10 {
+		buf[0] = '0'
+		buf[1] = toChar(n)
+		last = 2
+	} else {
+		for rem > 0 {
+			digit := rem % 10
+			buf[last] = toChar(digit)
+			rem /= 10
+			last += 1
+		}
+		for i, j := 0, last-1; i < j; i, j = i+1, j-1 {
+			buf[i], buf[j] = buf[j], buf[i]
+		}
+	}
+	return
 }
 
 ////////////////
@@ -351,6 +379,10 @@ func (t *textBox) init(font *Font, fontSize float64) {
 	t.charBuf = make([]rune, defaultTextBoxCap)
 }
 
+func (t *textBox) update() {
+
+}
+
 func (t *textBox) AppendChar(r rune) {
 	t.charBuf[t.charCount] = r
 	t.charCount += 1
@@ -358,7 +390,19 @@ func (t *textBox) AppendChar(r rune) {
 }
 
 func (t *textBox) DeleteChar() {
-	t.charCount -= 1
+	if t.charCount > 0 {
+		r := t.charBuf[t.charCount-1]
+		t.charCount -= 1
+		t.cursor.x -= t.font.GlyphAdvance(r, t.fontSize)
+	}
+}
+
+func (t *textBox) Clear() {
+	t.cursor = rectangle{
+		width:  2,
+		height: textSize,
+	}
+	t.charCount = 0
 }
 
 func (t *textBox) GetText() []rune {
