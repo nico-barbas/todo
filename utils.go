@@ -51,8 +51,9 @@ type (
 )
 
 var (
-	White = Color{255, 255, 255, 255}
-	Black = Color{0, 0, 0, 255}
+	White     = Color{255, 255, 255, 255}
+	WhiteA125 = Color{255, 255, 255, 125}
+	Black     = Color{0, 0, 0, 255}
 )
 
 func (c Color) RGBA() (r, g, b, a uint32) {
@@ -441,4 +442,70 @@ func (t *textBox) Clear() {
 
 func (t *textBox) GetText() []rune {
 	return t.charBuf[:t.charCount]
+}
+
+////////////////
+////////////////
+////////////////
+
+// Main downside is not being able to pop children rectLayout
+// FIXME: Add checks when cutting if length isn't too big for
+// the remaining rect size
+type (
+	rectLayout struct {
+		full      rectangle
+		remaining rectangle
+	}
+
+	rectCutKind int
+)
+
+const (
+	rectCutUp rectCutKind = iota
+	rectCutLeft
+	rectCutDown
+	rectCutRight
+)
+
+func newRectLayout(rect rectangle) rectLayout {
+	return rectLayout{
+		full:      rect,
+		remaining: rect,
+	}
+}
+
+func (r *rectLayout) cut(cutKind rectCutKind, length float64, padding float64) rectLayout {
+	var result rectangle
+	switch cutKind {
+	case rectCutUp:
+		result = rectangle{
+			x: r.remaining.x, y: r.remaining.y,
+			width: r.remaining.width, height: length,
+		}
+		r.remaining.y += length + padding
+		r.full.height -= length + padding
+
+	case rectCutLeft:
+		result = rectangle{
+			x: r.remaining.x, y: r.remaining.y,
+			width: length, height: r.remaining.height,
+		}
+		r.remaining.x += length + padding
+		r.remaining.width -= length + padding
+
+	case rectCutDown:
+		result = rectangle{
+			x: r.remaining.x, y: r.remaining.y + (r.remaining.height - (length + padding)),
+			width: r.remaining.width, height: length,
+		}
+		r.full.height -= length + padding
+
+	case rectCutRight:
+		result = rectangle{
+			x: r.remaining.x + (r.remaining.width - (length + padding)), y: r.remaining.y,
+			width: length, height: r.remaining.height,
+		}
+		r.remaining.width -= length + padding
+	}
+	return newRectLayout(result)
 }
