@@ -127,16 +127,50 @@ func (f *Font) MeasureText(t string, size float64) point {
 	return measure
 }
 
-func drawText(dst *ebiten.Image, f *Font, txt string, p point, textSize float64, clr Color) {
-	ascent := f.Ascent(textSize)
+type textOptions struct {
+	font   *Font
+	text   string
+	pos    point
+	bounds rectangle
+	size   float64
+	clr    Color
+}
+
+func drawText(dst *ebiten.Image, opt textOptions) {
+	ascent := opt.font.Ascent(opt.size)
 	text.Draw(
 		dst,
-		txt,
-		f.faces[int(textSize)],
-		int(p[0]),
-		int(p[1]+ascent),
-		clr,
+		opt.text,
+		opt.font.faces[int(opt.size)],
+		int(opt.pos[0]),
+		int(opt.pos[1]+ascent),
+		opt.clr,
 	)
+}
+
+func drawTextCenter(dst *ebiten.Image, opt textOptions) {
+	const yOffset = -2
+	ascent := opt.font.Ascent(opt.size)
+	textWidth := opt.font.MeasureText(opt.text, opt.size)[0]
+
+	textPos := point{
+		opt.bounds.x + (opt.bounds.width/2 - textWidth/2),
+		opt.bounds.y + (opt.bounds.height/2 - ascent/2) + yOffset,
+	}
+	text.Draw(
+		dst,
+		opt.text,
+		opt.font.faces[int(opt.size)],
+		int(textPos[0]),
+		int(textPos[1]+ascent),
+		opt.clr,
+	)
+}
+
+func drawImage(dst, src *ebiten.Image, p point) {
+	opt := ebiten.DrawImageOptions{}
+	opt.GeoM.Translate(p[0], p[1])
+	dst.DrawImage(src, &opt)
 }
 
 func drawImageSlice(dst *ebiten.Image, dstRect rectangle, src *ebiten.Image, c constraint, clr Color) {

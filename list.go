@@ -100,7 +100,10 @@ func (l *listWindow) draw(dst *ebiten.Image, tasks []task) {
 		item := &l.items[i]
 		task := &tasks[i]
 
-		drawText(dst, l.font, task.name, item.textPosition, textSize, White)
+		drawText(dst, textOptions{
+			font: l.font, text: task.name, pos: item.textPosition,
+			size: textSize, clr: White,
+		})
 		ebitenutil.DrawLine(
 			dst,
 			item.rect.x,
@@ -118,11 +121,15 @@ func (l *listWindow) draw(dst *ebiten.Image, tasks []task) {
 	}
 
 	drawImageSlice(dst, l.addBtnRect, l.rectOutline, l.outlineConstr, White)
-	textpos := point{
-		l.addBtnRect.x + (l.addBtnRect.width/2 - l.font.MeasureText("New Task", textSize)[0]/2),
-		l.addBtnRect.y + l.font.Ascent(textSize)/2,
-	}
-	drawText(dst, l.font, "New Task", textpos, textSize, White)
+	// textpos := point{
+	// 	l.addBtnRect.x + (l.addBtnRect.width/2 - l.font.MeasureText("New Task", textSize)[0]/2),
+	// 	l.addBtnRect.y + l.font.Ascent(textSize)/2,
+	// }
+	// drawText(dst, l.font, "New Task", textpos, textSize, White)
+	drawTextCenter(dst, textOptions{
+		font: l.font, text: "NewTask", bounds: l.addBtnRect,
+		size: textSize, clr: White,
+	})
 }
 
 func (l *listWindow) addItem() {

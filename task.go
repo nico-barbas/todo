@@ -2,6 +2,7 @@ package main
 
 const (
 	minSessionLength minute = 1
+	minSessionCount  int    = 1
 )
 
 type (

@@ -75,7 +75,7 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 
 		tSize := m.font.MeasureText("- Sessions -", textSize)
 		tPos := point{m.rect.x + (m.rect.width/2 - tSize[0]/2), 70}
-		drawText(dst, m.font, "- Sessions -", tPos, textSize, White)
+		drawText(dst, textOptions{font: m.font, text: "- Sessions -", pos: tPos, size: textSize, clr: White})
 		for i := 0; i < task.sessionRequired; i += 1 {
 			checkBoxRect := rectangle{startPos + float64(i*sessionCheckHeight), 100, sessionCheckSize, sessionCheckSize}
 			drawImageSlice(dst, checkBoxRect, m.rectOutline, m.outlineConstr, White)
@@ -88,11 +88,11 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 		text := string(task.timer.toString())
 		tSize = m.font.MeasureText(text, textSize)
 		tPos = point{m.rect.x + (m.rect.width/2 - tSize[0]/2), 130}
-		drawText(dst, m.font, text, tPos, textSize, White)
+		drawText(dst, textOptions{font: m.font, text: text, pos: tPos, size: textSize, clr: White})
 
 		tSize = m.font.MeasureText("Start Timer", textSize)
 		tPos = point{m.timerRect.x + (m.timerRect.width/2 - tSize[0]/2), m.timerRect.y + (m.timerRect.height/2 - m.font.Ascent(textSize)/2 - 2)}
-		drawText(dst, m.font, "Start Timer", tPos, textSize, White)
+		drawText(dst, textOptions{font: m.font, text: "Start Timer", pos: tPos, size: textSize, clr: White})
 		drawImageSlice(dst, m.timerRect, m.rectOutline, m.outlineConstr, White)
 	}
 }
