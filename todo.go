@@ -111,6 +111,7 @@ func (t *Todo) Update() error {
 }
 
 func (t *Todo) Draw(screen *ebiten.Image) {
+	screen.Fill(darkBackground1)
 	t.list.draw(screen, t.tasks[:t.count])
 
 	t.mainWindow.draw(screen, t.selected)

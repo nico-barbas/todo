@@ -53,7 +53,7 @@ type (
 var (
 	White     = Color{255, 255, 255, 255}
 	WhiteA125 = Color{255, 255, 255, 125}
-	Black     = Color{0, 0, 0, 255}
+	// Black     = Color{0, 0, 0, 255}
 )
 
 func (c Color) RGBA() (r, g, b, a uint32) {
@@ -171,6 +171,29 @@ func drawTextCenter(dst *ebiten.Image, opt textOptions) {
 func drawImage(dst, src *ebiten.Image, p point) {
 	opt := ebiten.DrawImageOptions{}
 	opt.GeoM.Translate(p[0], p[1])
+	dst.DrawImage(src, &opt)
+}
+
+func drawImageCentered(dst, src *ebiten.Image, bounds rectangle, scale float64, clr Color) {
+	opt := ebiten.DrawImageOptions{}
+	// Color
+	r, g, b, a := clr.RGBA()
+	opt.ColorM.Scale(
+		float64(r)/float64(a),
+		float64(g)/float64(a),
+		float64(b)/float64(a),
+		float64(a)/0xffff,
+	)
+
+	opt.GeoM.Scale(scale, scale)
+	// Position
+	w := float64(src.Bounds().Dx()) * scale
+	h := float64(src.Bounds().Dy()) * scale
+	opt.GeoM.Translate(
+		bounds.x+(bounds.width/2-w/2),
+		bounds.y+(bounds.height/2-h/2),
+	)
+
 	dst.DrawImage(src, &opt)
 }
 
@@ -495,17 +518,60 @@ func (r *rectLayout) cut(cutKind rectCutKind, length float64, padding float64) r
 
 	case rectCutDown:
 		result = rectangle{
-			x: r.remaining.x, y: r.remaining.y + (r.remaining.height - (length + padding)),
+			x: r.remaining.x, y: r.remaining.y + (r.remaining.height - length),
 			width: r.remaining.width, height: length,
 		}
 		r.remaining.height -= length + padding
 
 	case rectCutRight:
 		result = rectangle{
-			x: r.remaining.x + (r.remaining.width - (length + padding)), y: r.remaining.y,
+			x: r.remaining.x + (r.remaining.width - length), y: r.remaining.y,
 			width: length, height: r.remaining.height,
 		}
 		r.remaining.width -= length + padding
 	}
 	return newRectLayout(result)
+}
+
+////////////////
+////////////////
+////////////////
+
+type (
+	rectArray struct {
+		rects    []rectElement
+		focused  rectangle
+		receiver rectReceiver
+	}
+
+	rectElement struct {
+		userID rectID
+		bounds rectangle
+	}
+
+	rectReceiver interface {
+		onClick(userID rectID)
+	}
+
+	rectID int
+)
+
+func (r *rectArray) init(receiver rectReceiver, cap int) {
+	r.rects = make([]rectElement, 0, cap)
+}
+
+func (r *rectArray) add(el rectElement) {
+	r.rects = append(r.rects, el)
+}
+
+func (r *rectArray) update(mPos point, mLeft bool) {
+	for _, rect := range r.rects {
+		if rect.bounds.boundCheck(mPos) {
+			r.focused = rect.bounds
+			if mLeft {
+				r.receiver.onClick(rect.userID)
+			}
+			break
+		}
+	}
 }

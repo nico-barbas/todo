@@ -39,6 +39,7 @@ type optWindow struct {
 	font          *Font
 	rectOutline   *ebiten.Image
 	outlineConstr constraint
+	bgFill        *ebiten.Image
 }
 
 func (o *optWindow) init(font *Font, outline *ebiten.Image) {
@@ -128,6 +129,8 @@ func (o *optWindow) init(font *Font, outline *ebiten.Image) {
 	o.font = font
 	o.rectOutline = outline
 	o.outlineConstr = constraint{2, 2, 2, 2}
+	o.bgFill = ebiten.NewImage(1, 1)
+	o.bgFill.Fill(darkBackground2)
 
 	o.nameTextBox.init(font, textSize)
 }
@@ -259,8 +262,14 @@ func (o *optWindow) update(mPos point, mLeft bool) {
 
 func (o *optWindow) draw(dst *ebiten.Image) {
 	if o.active {
+		fillOpt := ebiten.DrawImageOptions{}
+		fillOpt.CompositeMode = ebiten.CompositeModeSourceOver
+		fillOpt.GeoM.Scale(800, 600)
+		fillOpt.ColorM.Scale(1.0, 1.0, 1.0, 0.5)
+		dst.DrawImage(o.bgFill, &fillOpt)
+
 		// Draw the background
-		drawRect(dst, o.rect, Black)
+		drawRect(dst, o.rect, darkBackground1)
 		drawImageSlice(dst, o.rect, o.rectOutline, o.outlineConstr, White)
 
 		// Draw the content of the window
