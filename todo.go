@@ -53,6 +53,7 @@ type (
 
 func (t *Todo) Init() {
 	todo = t
+	loadTheme()
 
 	// Caching all the rects possible
 	t.tasks = make([]task, 0, initialCap)

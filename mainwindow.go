@@ -16,15 +16,11 @@ const (
 )
 
 const (
-	settingsBtnRect rectID = iota
-	archiveBtnRect
-	titleRect
-	progressRect
-	workTimerRect
-	restTimerRect
-	timerBtnRect
-	taskSettingsBtnRect
-	archiveTaskBtnRect
+	settingsBtnID rectID = iota
+	archiveBtnID
+	timerBtnID
+	taskSettingsBtnID
+	archiveTaskBtnID
 )
 
 type mainWindow struct {
@@ -42,21 +38,20 @@ type mainWindow struct {
 	settingElements rectArray
 	infoElements    rectArray
 
+	timerBtnPressed bool
+
 	font          *Font
 	rectOutline   *ebiten.Image
 	outlineConstr constraint
 	archiveIcon   *ebiten.Image
 	settingsIcon  *ebiten.Image
-
-	shouldHighlight bool
-	highlightRect   rectangle
 }
 
 func (m *mainWindow) init(font *Font, outline *ebiten.Image) {
 	const mainWindowPadding = 10
 	const mainWindowNoPadding = 0
 	m.settingElements.init(m, 5)
-	m.infoElements.init(m, 20)
+	m.infoElements.init(m, 5)
 
 	m.rect = newRectLayout(rectangle{200, 0, 600, windowHeight})
 	m.rect.cut(rectCutUp, mainWindowPadding, 0)
@@ -65,6 +60,8 @@ func (m *mainWindow) init(font *Font, outline *ebiten.Image) {
 	settingsRect.cut(rectCutRight, mainWindowPadding, 0)
 	m.settingsBtnRect = settingsRect.cut(rectCutRight, 30, mainWindowPadding)
 	m.archiveBtnRect = settingsRect.cut(rectCutRight, 30, mainWindowPadding)
+	m.settingElements.add(m.settingsBtnRect.remaining, settingsBtnID)
+	m.settingElements.add(m.archiveBtnRect.remaining, archiveBtnID)
 
 	m.titleRect = m.rect.cut(rectCutUp, 80, mainWindowPadding+10)
 
@@ -82,6 +79,7 @@ func (m *mainWindow) init(font *Font, outline *ebiten.Image) {
 	m.timerBtnRect = m.rect.cut(rectCutUp, 50, mainWindowPadding)
 	m.timerBtnRect.cut(rectCutRight, 200, 0)
 	m.timerBtnRect.cut(rectCutLeft, 200, 0)
+	m.infoElements.add(m.timerBtnRect.remaining, timerBtnID)
 
 	m.rect.cut(rectCutDown, mainWindowPadding, 0)
 	taskSettingsRect := m.rect.cut(rectCutDown, 30, mainWindowPadding)
@@ -92,6 +90,8 @@ func (m *mainWindow) init(font *Font, outline *ebiten.Image) {
 		mainWindowPadding,
 	)
 	m.taskSettingsBtnRect = taskSettingsRect.cut(rectCutRight, 30, mainWindowPadding)
+	m.infoElements.add(m.archiveTaskBtnRect.remaining, archiveTaskBtnID)
+	m.infoElements.add(m.taskSettingsBtnRect.remaining, taskSettingsBtnID)
 
 	m.font = font
 	m.rectOutline = outline
@@ -102,38 +102,14 @@ func (m *mainWindow) init(font *Font, outline *ebiten.Image) {
 }
 
 func (m *mainWindow) update(mPos point, mLeft bool, selected bool) (startTask bool) {
-
-	m.shouldHighlight = false
+	m.timerBtnPressed = false
 	if !isInputHandled(mPos) {
 		if selected {
-			switch {
-			case m.timerBtnRect.remaining.boundCheck(mPos):
-				m.shouldHighlight = true
-				m.highlightRect = m.timerBtnRect.remaining
-				if mLeft {
-					startTask = true
-				}
-			case m.archiveTaskBtnRect.remaining.boundCheck(mPos):
-				m.shouldHighlight = true
-				m.highlightRect = m.archiveTaskBtnRect.remaining
-
-			case m.taskSettingsBtnRect.remaining.boundCheck(mPos):
-				m.shouldHighlight = true
-				m.highlightRect = m.taskSettingsBtnRect.remaining
-			}
-
+			m.infoElements.update(mPos, mLeft)
 		}
-		switch {
-		case m.archiveBtnRect.remaining.boundCheck(mPos):
-			m.shouldHighlight = true
-			m.highlightRect = m.archiveBtnRect.remaining
-
-		case m.settingsBtnRect.remaining.boundCheck(mPos):
-			m.shouldHighlight = true
-			m.highlightRect = m.settingsBtnRect.remaining
-		}
+		m.settingElements.update(mPos, mLeft)
 	}
-	return
+	return m.timerBtnPressed
 }
 
 func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
@@ -145,16 +121,13 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 		m.rect.full.y+m.rect.full.height,
 		color.White,
 	)
-	if m.shouldHighlight {
-		drawRect(dst, m.highlightRect, WhiteA125)
-	}
+	m.settingElements.highlight(dst)
 
-	drawImageSlice(dst, m.settingsBtnRect.remaining, m.rectOutline, m.outlineConstr, White)
-	drawImageCentered(dst, m.settingsIcon, m.settingsBtnRect.remaining, 1, White)
-	drawImageSlice(dst, m.archiveBtnRect.remaining, m.rectOutline, m.outlineConstr, White)
-	drawImageCentered(dst, m.archiveIcon, m.archiveBtnRect.remaining, 1, White)
+	drawIcontBtn(dst, m.settingsBtnRect.remaining, m.settingsIcon)
+	drawIcontBtn(dst, m.archiveBtnRect.remaining, m.archiveIcon)
 
 	if task != nil {
+		m.infoElements.highlight(dst)
 
 		drawTextCenter(dst, textOptions{
 			font: m.font, text: task.name, bounds: m.titleRect.remaining,
@@ -162,33 +135,20 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 		})
 		drawRect(dst, m.progressRect.remaining, White)
 
-		drawImageSlice(dst, m.workTimerRect.remaining, m.rectOutline, m.outlineConstr, White)
-		drawTextCenter(dst, textOptions{
-			font: m.font, text: string(task.timer.toString()), bounds: m.workTimerRect.remaining,
-			size: largeTextSize, clr: White,
-		})
+		drawTextBtn(dst, m.workTimerRect.remaining, string(task.timer.toString()), largeTextSize)
 
-		drawImageSlice(dst, m.restTimerRect.remaining, m.rectOutline, m.outlineConstr, White)
-		drawTextCenter(dst, textOptions{
-			font: m.font, text: string(task.timer.toString()), bounds: m.restTimerRect.remaining,
-			size: largeTextSize, clr: White,
-		})
+		drawTextBtn(dst, m.restTimerRect.remaining, string(task.timer.toString()), largeTextSize)
 
-		drawImageSlice(dst, m.timerBtnRect.remaining, m.rectOutline, m.outlineConstr, White)
-		drawTextCenter(dst, textOptions{
-			font: m.font, text: "Start Timer", bounds: m.timerBtnRect.remaining,
-			size: textSize, clr: White,
-		})
+		drawTextBtn(dst, m.timerBtnRect.remaining, "Start Timer", textSize)
 
-		drawImageSlice(dst, m.archiveTaskBtnRect.remaining, m.rectOutline, m.outlineConstr, White)
-		drawTextCenter(dst, textOptions{
-			font: m.font, text: "Archive Task", bounds: m.archiveTaskBtnRect.remaining,
-			size: textSize, clr: White,
-		})
-		drawImageSlice(dst, m.taskSettingsBtnRect.remaining, m.rectOutline, m.outlineConstr, White)
+		drawTextBtn(dst, m.archiveTaskBtnRect.remaining, "Archive Task", textSize)
+		drawIcontBtn(dst, m.taskSettingsBtnRect.remaining, m.archiveIcon)
 	}
 }
 
 func (m *mainWindow) onClick(userID rectID) {
-
+	switch userID {
+	case timerBtnID:
+		m.timerBtnPressed = true
+	}
 }

@@ -539,8 +539,12 @@ func (r *rectLayout) cut(cutKind rectCutKind, length float64, padding float64) r
 
 type (
 	rectArray struct {
-		rects    []rectElement
-		focused  rectangle
+		rects []rectElement
+		focus struct {
+			active bool
+			rect   rectangle
+		}
+		// focused  rectangle
 		receiver rectReceiver
 	}
 
@@ -557,21 +561,30 @@ type (
 )
 
 func (r *rectArray) init(receiver rectReceiver, cap int) {
+	r.receiver = receiver
 	r.rects = make([]rectElement, 0, cap)
 }
 
-func (r *rectArray) add(el rectElement) {
-	r.rects = append(r.rects, el)
+func (r *rectArray) add(rect rectangle, userID rectID) {
+	r.rects = append(r.rects, rectElement{userID, rect})
 }
 
 func (r *rectArray) update(mPos point, mLeft bool) {
+	r.focus.active = false
 	for _, rect := range r.rects {
 		if rect.bounds.boundCheck(mPos) {
-			r.focused = rect.bounds
+			r.focus.active = true
+			r.focus.rect = rect.bounds
 			if mLeft {
 				r.receiver.onClick(rect.userID)
 			}
 			break
 		}
+	}
+}
+
+func (r *rectArray) highlight(dst *ebiten.Image) {
+	if r.focus.active {
+		drawRect(dst, r.focus.rect, WhiteA125)
 	}
 }
