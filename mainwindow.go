@@ -15,12 +15,13 @@ const (
 )
 
 type mainWindow struct {
-	rect         rectLayout
-	titleRect    rectLayout
-	progressRect rectLayout
-	timerRect    rectLayout
-	// rect      rectangle
-	// timerRect rectangle
+	rect            rectLayout
+	settingsBtnRect rectLayout
+	archiveBtnRect  rectLayout
+	titleRect       rectLayout
+	progressRect    rectLayout
+	timerRect       rectLayout
+	timerBtnRect    rectLayout
 
 	font          *Font
 	rectOutline   *ebiten.Image
@@ -30,17 +31,28 @@ type mainWindow struct {
 }
 
 func (m *mainWindow) init(font *Font, outline *ebiten.Image) {
-	const mainWindowPadding = 5
-	m.rect = newRectLayout(rectangle{200, 0, 600, windowWidth})
-	m.titleRect = m.rect.cut(rectCutUp, 50, mainWindowPadding)
+	const mainWindowPadding = 10
+	const mainWindowNoPadding = 0
+	m.rect = newRectLayout(rectangle{200, 0, 600, windowHeight})
+	m.rect.cut(rectCutUp, mainWindowPadding, 0)
+
+	settingsRect := m.rect.cut(rectCutUp, 30, mainWindowPadding)
+	m.settingsBtnRect = settingsRect.cut(rectCutRight, 30, mainWindowPadding)
+	m.archiveBtnRect = settingsRect.cut(rectCutRight, 30, mainWindowPadding)
+
+	m.titleRect = m.rect.cut(rectCutUp, 80, mainWindowPadding+10)
 
 	m.progressRect = m.rect.cut(rectCutUp, 50, mainWindowPadding)
 	m.progressRect.cut(rectCutRight, 200, 0)
 	m.progressRect.cut(rectCutLeft, 200, 0)
 
-	m.timerRect = m.rect.cut(rectCutUp, 50, mainWindowPadding)
-	m.timerRect.cut(rectCutRight, 200, 0)
-	m.timerRect.cut(rectCutLeft, 200, 0)
+	m.timerRect = m.rect.cut(rectCutUp, 100, mainWindowPadding)
+	m.timerRect.cut(rectCutRight, 100, 0)
+	m.timerRect.cut(rectCutLeft, 100, 0)
+
+	m.timerBtnRect = m.rect.cut(rectCutUp, 50, mainWindowPadding)
+	m.timerBtnRect.cut(rectCutRight, 200, 0)
+	m.timerBtnRect.cut(rectCutLeft, 200, 0)
 
 	m.font = font
 	m.rectOutline = outline
@@ -51,7 +63,7 @@ func (m *mainWindow) update(mPos point, mLeft bool, selected bool) (startTask bo
 
 	m.shouldHighlight = false
 	if !isInputHandled(mPos) {
-		if selected && m.timerRect.remaining.boundCheck(mPos) {
+		if selected && m.timerBtnRect.remaining.boundCheck(mPos) {
 			m.shouldHighlight = true
 			if mLeft {
 				startTask = true
@@ -70,18 +82,23 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 		m.rect.full.y+m.rect.full.height,
 		color.White,
 	)
+	drawRect(dst, m.settingsBtnRect.remaining, White)
+	drawRect(dst, m.archiveBtnRect.remaining, White)
 
 	if task != nil {
 		if m.shouldHighlight {
-			drawRect(dst, m.timerRect.remaining, WhiteA125)
+			drawRect(dst, m.timerBtnRect.remaining, WhiteA125)
 		}
 		drawTextCenter(dst, textOptions{
 			font: m.font, text: task.name, bounds: m.titleRect.remaining,
 			size: largeTextSize, clr: White,
 		})
 		drawRect(dst, m.progressRect.remaining, White)
+		drawRect(dst, m.timerRect.remaining, White)
+		drawRect(dst, m.settingsBtnRect.remaining, White)
+		drawRect(dst, m.archiveBtnRect.remaining, White)
 
-		drawImageSlice(dst, m.timerRect.remaining, m.rectOutline, m.outlineConstr, White)
+		drawImageSlice(dst, m.timerBtnRect.remaining, m.rectOutline, m.outlineConstr, White)
 		// checkWidth := float64(task.sessionRequired * sessionCheckHeight)
 		// startPos := m.rect.x + (m.rect.width/2 - checkWidth/2)
 

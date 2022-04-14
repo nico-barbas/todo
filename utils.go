@@ -483,7 +483,7 @@ func (r *rectLayout) cut(cutKind rectCutKind, length float64, padding float64) r
 			width: r.remaining.width, height: length,
 		}
 		r.remaining.y += length + padding
-		r.full.height -= length + padding
+		r.remaining.height -= length + padding
 
 	case rectCutLeft:
 		result = rectangle{
@@ -498,7 +498,7 @@ func (r *rectLayout) cut(cutKind rectCutKind, length float64, padding float64) r
 			x: r.remaining.x, y: r.remaining.y + (r.remaining.height - (length + padding)),
 			width: r.remaining.width, height: length,
 		}
-		r.full.height -= length + padding
+		r.remaining.height -= length + padding
 
 	case rectCutRight:
 		result = rectangle{
