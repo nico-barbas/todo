@@ -44,7 +44,7 @@ type (
 		mainWindow mainWindow
 
 		// Optional windows data
-		optWindow optWindow
+		addWindow addWindow
 
 		signals signalDispatcher
 	}
@@ -74,7 +74,7 @@ func (t *Todo) Init() {
 	t.mainWindow.init(&t.font, t.rectOutline)
 
 	// Add window
-	t.optWindow.init(&t.font, t.rectOutline)
+	t.addWindow.init(&t.font, t.rectOutline)
 }
 
 func (t *Todo) Update() error {
@@ -86,7 +86,7 @@ func (t *Todo) Update() error {
 	mPos := point{float64(mx), float64(my)}
 	mLeft := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 
-	t.optWindow.update(mPos, mLeft)
+	t.addWindow.update(mPos, mLeft)
 
 	selected := t.list.update(mPos, mLeft)
 	if selected >= 0 {
@@ -118,7 +118,7 @@ func (t *Todo) Draw(screen *ebiten.Image) {
 
 	t.mainWindow.draw(screen, t.selected)
 
-	t.optWindow.draw(screen)
+	t.addWindow.draw(screen)
 }
 
 func (t *Todo) Layout(outW, outH int) (int, int) {
@@ -170,7 +170,7 @@ func FireSignal(k SignalKind, v SignalValue) {
 }
 
 func isInputHandled(mPos point) bool {
-	if todo.optWindow.active && todo.optWindow.rect.boundCheck(mPos) {
+	if todo.addWindow.active && todo.addWindow.rect.boundCheck(mPos) {
 		return true
 	}
 	return false

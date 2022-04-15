@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"todo/anim"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,21 +16,22 @@ const (
 const (
 	listItemAddAnimation = iota
 	listItemRemoveAnimation
-	listItemMoveAnimation
+	listItemHoverAnimation
 )
 
 type (
 	listWindow struct {
-		rect       rectangle
-		activeRect rectangle
-		addBtnRect rectangle
+		rect       rectLayout
+		listRect   rectLayout
+		addBtnRect rectLayout
 
 		font          *Font
 		rectOutline   *ebiten.Image
 		outlineConstr constraint
 
-		hovered  *listItem
-		selected *listItem
+		previousHovered *listItem
+		hovered         *listItem
+		selected        *listItem
 
 		shouldHighlight bool
 		highlightRect   rectangle
@@ -44,19 +46,21 @@ type (
 		rect         rectangle
 		textPosition point
 		checkRect    rectangle
-		animations   [3]anim.Animation
+		animations   [4]anim.Animation
 	}
 )
 
 func (l *listWindow) init(font *Font, outline *ebiten.Image) {
 	AddSignalListener(todoTaskRemoved, l)
-	l.rect = rectangle{0, 0, 200, windowHeight}
-	l.addBtnRect = rectangle{
-		x:      l.rect.x + btnPadding,
-		y:      l.rect.y + l.rect.height - textSize - (10 * 2) - 6,
-		width:  l.rect.width - (btnPadding * 2),
-		height: textSize + (10 * 2),
-	}
+	l.rect = newRectLayout(rectangle{0, 0, 200, windowHeight})
+	l.addBtnRect = l.rect.cut(rectCutDown, textSize*2, 0)
+	l.listRect = l.rect.cut(rectCutUp, l.rect.remaining.height, 0)
+	// l.addBtnRect = rectangle{
+	// 	x:      l.rect.x + btnPadding,
+	// 	y:      l.rect.y + l.rect.height - textSize - (10 * 2) - 6,
+	// 	width:  l.rect.width - (btnPadding * 2),
+	// 	height: textSize + (10 * 2),
+	// }
 	l.items = make([]listItem, initialTaskCap)
 	l.cap = initialTaskCap
 
@@ -68,8 +72,14 @@ func (l *listWindow) init(font *Font, outline *ebiten.Image) {
 func (l *listWindow) update(mPos point, mLeft bool) (selected int) {
 	selected = -1
 	l.shouldHighlight = false
+	l.previousHovered = l.hovered
+	l.hovered = nil
 
-	if l.rect.boundCheck(mPos) {
+	if ebiten.IsKeyPressed(ebiten.KeySpace) {
+		fmt.Println("")
+	}
+
+	if l.rect.full.boundCheck(mPos) {
 		index := int(mPos[1] / itemHeight)
 		if index < l.count {
 			l.hovered = &l.items[index]
@@ -83,9 +93,9 @@ func (l *listWindow) update(mPos point, mLeft bool) (selected int) {
 				selected = index
 				l.selected = l.hovered
 			}
-		} else if l.addBtnRect.boundCheck(mPos) {
+		} else if l.addBtnRect.remaining.boundCheck(mPos) {
 			l.shouldHighlight = true
-			l.highlightRect = l.addBtnRect
+			l.highlightRect = l.addBtnRect.remaining
 			if mLeft {
 				FireSignal(todoAddBtnPressed, SignalNoArgs)
 			}
@@ -94,10 +104,22 @@ func (l *listWindow) update(mPos point, mLeft bool) (selected int) {
 		}
 	}
 
+	if l.hovered != l.previousHovered {
+		if l.hovered != nil {
+			l.hovered.animations[listItemHoverAnimation].Play()
+		}
+	}
+
 	for i := 0; i < l.count; i += 1 {
 		item := &l.items[i]
 		for i := range item.animations {
 			item.animations[i].Update()
+		}
+		if item != l.hovered {
+			if !item.animations[listItemAddAnimation].Playing || !item.animations[listItemRemoveAnimation].Playing {
+				item.animations[listItemHoverAnimation].Reset()
+				item.textPosition[0] = item.rect.x + itemPadding
+			}
 		}
 	}
 	return
@@ -129,7 +151,7 @@ func (l *listWindow) draw(dst *ebiten.Image, tasks []task) {
 			item.rect.y+item.rect.height,
 			item.rect.x+item.rect.width,
 			item.rect.y+item.rect.height,
-			White,
+			darkSeparator,
 		)
 
 		drawImageSlice(dst, item.checkRect, l.rectOutline, l.outlineConstr, White)
@@ -139,16 +161,26 @@ func (l *listWindow) draw(dst *ebiten.Image, tasks []task) {
 		}
 	}
 
-	drawTextBtn(dst, l.addBtnRect, "NewTask", textSize)
+	// drawTextBtn(dst, l.addBtnRect, "NewTask", textSize)
+	drawRect(dst, rectangle{l.addBtnRect.remaining.x, l.addBtnRect.remaining.y, l.addBtnRect.remaining.width, 1}, darkSeparator)
+	drawTextCenter(dst, textOptions{
+		font: l.font, text: "New Task", bounds: l.addBtnRect.remaining,
+		size: textSize, clr: White,
+	})
 }
 
 func (l *listWindow) addItem() {
 	rect := rectangle{0, float64(l.count) * itemHeight, 200, itemHeight}
-	textPos := point{rect.x, rect.y + itemPadding}
+	textPos := point{rect.x + itemPadding, rect.y + itemPadding}
 	i := listItem{
 		rect:         rect,
 		textPosition: textPos,
-		checkRect:    rectangle{(rect.x + rect.width) - itemHeight, textPos[1], textSize, textSize},
+		checkRect: rectangle{
+			(rect.x + rect.width) - itemHeight,
+			textPos[1] + itemPadding/2,
+			textSize - itemPadding,
+			textSize - itemPadding,
+		},
 	}
 	if l.count > len(l.items) {
 		newSlice := make([]listItem, l.cap*2)
@@ -159,18 +191,19 @@ func (l *listWindow) addItem() {
 	l.count += 1
 
 	func(li *listItem) {
-		li.animations = [3]anim.Animation{
+		li.animations = [4]anim.Animation{
 			anim.NewAnimation("add", l),
 			anim.NewAnimation("remove", l),
-			anim.NewAnimation("move", l),
+			anim.NewAnimation("hoverStart", l),
+			anim.NewAnimation("hoverEnd", l),
 		}
-		li.animations[listItemAddAnimation].AddProperty("rectx", &li.rect.x, -200, false)
+		li.animations[listItemAddAnimation].AddProperty("rectx", &li.rect.x, li.rect.x-200, false)
 		li.animations[listItemAddAnimation].AddKey("rectx", anim.AnimationKey{
 			Easing:   anim.EaseOutCubic,
 			Duration: anim.SecondsToTicks(0.2),
 			Change:   li.rect.width,
 		})
-		li.animations[listItemAddAnimation].AddProperty("textx", &li.textPosition[0], -200, false)
+		li.animations[listItemAddAnimation].AddProperty("textx", &li.textPosition[0], li.textPosition[0]-200, false)
 		li.animations[listItemAddAnimation].AddKey("textx", anim.AnimationKey{
 			Easing:   anim.EaseOutCubic,
 			Duration: anim.SecondsToTicks(0.2),
@@ -203,6 +236,14 @@ func (l *listWindow) addItem() {
 			Change:   -li.rect.width,
 		})
 
+		// Remove animation
+		li.animations[listItemHoverAnimation].AddProperty("textx", &li.textPosition[0], li.textPosition[0], false)
+		li.animations[listItemHoverAnimation].AddKey("textx", anim.AnimationKey{
+			Easing:   anim.EaseInCubic,
+			Duration: anim.SecondsToTicks(0.1),
+			Change:   20,
+		})
+
 		li.animations[listItemAddAnimation].Play()
 	}(&l.items[l.count-1])
 }
@@ -216,11 +257,16 @@ func (l *listWindow) removeItem(at int) {
 func (l *listWindow) orderItems() {
 	for i := 0; i < l.count; i += 1 {
 		rect := rectangle{0, float64(i * itemHeight), 200, itemHeight}
-		textPos := point{rect.x, rect.y + itemPadding}
+		textPos := point{rect.x + itemPadding, rect.y + itemPadding}
 		item := &l.items[i]
 		item.rect = rect
 		item.textPosition = textPos
-		item.checkRect = rectangle{(rect.x + rect.width) - itemHeight, textPos[1], textSize, textSize}
+		item.checkRect = rectangle{
+			(rect.x + rect.width) - itemHeight,
+			textPos[1] + itemPadding/2,
+			textSize - itemPadding,
+			textSize - itemPadding,
+		}
 		item.animations[listItemAddAnimation].SetPropertyRef("rectx", &item.rect.x)
 		item.animations[listItemAddAnimation].SetPropertyRef("textx", &item.textPosition[0])
 		item.animations[listItemAddAnimation].SetPropertyRef("checkrectx", &item.checkRect.x)

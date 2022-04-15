@@ -155,6 +155,12 @@ func (a *Animation) Play() {
 	a.Playing = true
 }
 
+func (a *Animation) Reset() {
+	for index := range a.properties {
+		a.properties[index].reset()
+	}
+}
+
 func (a *Animation) Update() {
 	if !a.Playing {
 		return

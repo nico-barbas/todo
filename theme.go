@@ -8,8 +8,10 @@ import (
 )
 
 var (
-	darkBackground1 = Color{48, 41, 51, 255}
-	darkBackground2 = Color{24, 20, 26, 255}
+	darkBackground1 = Color{32, 32, 32, 255}
+	darkBackground2 = Color{25, 25, 25, 255}
+	darkBackground3 = Color{12, 12, 12, 255}
+	darkSeparator   = Color{100, 92, 87, 255}
 )
 
 var (

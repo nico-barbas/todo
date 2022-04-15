@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image/color"
 	_ "image/png"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -106,13 +105,14 @@ func (m *mainWindow) update(mPos point, mLeft bool, selected bool) (startTask bo
 }
 
 func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
+	drawRect(dst, m.rect.full, darkBackground2)
 	ebitenutil.DrawLine(
 		dst,
 		m.rect.full.x,
 		m.rect.full.y,
 		m.rect.full.x,
 		m.rect.full.y+m.rect.full.height,
-		color.White,
+		darkSeparator,
 	)
 	m.settingElements.highlight(dst)
 
