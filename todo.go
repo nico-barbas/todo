@@ -20,6 +20,7 @@ const (
 const (
 	todoAddBtnPressed SignalKind = iota
 	todoTaskAdded
+	todoTaskRemoved
 )
 
 var todo *Todo
@@ -61,6 +62,7 @@ func (t *Todo) Init() {
 	t.signals.init()
 
 	t.signals.addListener(todoTaskAdded, t)
+	t.signals.addListener(todoTaskRemoved, t)
 
 	// Resources
 	t.font = NewFont("assets/FiraSans-Regular.ttf", 72, []int{smallTextSize, textSize, largeTextSize})
@@ -125,13 +127,6 @@ func (t *Todo) Layout(outW, outH int) (int, int) {
 }
 
 func (t *Todo) addTask(_t task) {
-	// newTask := task{
-	// 	name:             name,
-	// 	done:             false,
-	// 	sessionRequired:  5,
-	// 	sessionCompleted: 1,
-	// 	sessionLength:    1,
-	// }
 	newTask := _t
 	newTask.init()
 	if t.count > len(t.tasks) {
@@ -148,6 +143,17 @@ func (t *Todo) OnSignal(s Signal) {
 	switch s.Kind {
 	case todoTaskAdded:
 		t.addTask(s.Value.(task))
+	case todoTaskRemoved:
+		// This is always the currently selected one
+		for i := 0; i < t.count; i += 1 {
+			task := &t.tasks[i]
+			if task.name == t.selected.name {
+				copy(t.tasks[i:], t.tasks[i+1:])
+				t.count -= 1
+				t.list.removeItem(i)
+				break
+			}
+		}
 	}
 }
 

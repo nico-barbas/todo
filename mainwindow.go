@@ -126,6 +126,7 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 	drawIcontBtn(dst, m.settingsBtnRect.remaining, m.settingsIcon)
 	drawIcontBtn(dst, m.archiveBtnRect.remaining, m.archiveIcon)
 
+	// Task info widgets
 	if task != nil {
 		m.infoElements.highlight(dst)
 
@@ -150,5 +151,7 @@ func (m *mainWindow) onClick(userID rectID) {
 	switch userID {
 	case timerBtnID:
 		m.timerBtnPressed = true
+	case archiveTaskBtnID:
+		FireSignal(todoTaskRemoved, SignalNoArgs)
 	}
 }

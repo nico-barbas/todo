@@ -121,11 +121,6 @@ func (l *listWindow) draw(dst *ebiten.Image, tasks []task) {
 	}
 
 	drawImageSlice(dst, l.addBtnRect, l.rectOutline, l.outlineConstr, White)
-	// textpos := point{
-	// 	l.addBtnRect.x + (l.addBtnRect.width/2 - l.font.MeasureText("New Task", textSize)[0]/2),
-	// 	l.addBtnRect.y + l.font.Ascent(textSize)/2,
-	// }
-	// drawText(dst, l.font, "New Task", textpos, textSize, White)
 	drawTextCenter(dst, textOptions{
 		font: l.font, text: "NewTask", bounds: l.addBtnRect,
 		size: textSize, clr: White,
@@ -147,4 +142,22 @@ func (l *listWindow) addItem() {
 	}
 	l.items = append(l.items, i)
 	l.count += 1
+}
+
+func (l *listWindow) removeItem(at int) {
+	copy(l.items[at:], l.items[at+1:])
+	l.count -= 1
+	l.orderItems()
+}
+
+func (l *listWindow) orderItems() {
+	for i := 0; i < l.count; i += 1 {
+		rect := rectangle{0, float64(i * itemHeight), 200, itemHeight}
+		textPos := point{rect.x, rect.y + itemPadding}
+		l.items[i] = listItem{
+			rect:         rect,
+			textPosition: textPos,
+			checkRect:    rectangle{(rect.x + rect.width) - itemHeight, textPos[1], textSize, textSize},
+		}
+	}
 }
