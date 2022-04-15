@@ -7,20 +7,21 @@ import (
 )
 
 const (
-	windowWidth   = 800
-	windowHeight  = 600
-	initialCap    = 20
-	smallTextSize = 14
-	textSize      = 20
-	largeTextSize = 30
-	btnPadding    = 15
-	btnHeight     = textSize + (10 * 2)
+	windowWidth    = 800
+	windowHeight   = 600
+	initialTaskCap = 20
+	smallTextSize  = 14
+	textSize       = 20
+	largeTextSize  = 30
+	btnPadding     = 15
+	btnHeight      = textSize + (10 * 2)
 )
 
 const (
 	todoAddBtnPressed SignalKind = iota
 	todoTaskAdded
 	todoTaskRemoved
+	todoTaskRemoveAnimationDone
 )
 
 var todo *Todo
@@ -55,12 +56,12 @@ func (t *Todo) Init() {
 
 	// Caching all the rects possible
 	// and init the subsytems
-	t.tasks = make([]task, 0, initialCap)
-	t.cap = initialCap
+	t.tasks = make([]task, initialTaskCap)
+	t.cap = initialTaskCap
 	t.signals.init()
 
 	t.signals.addListener(todoTaskAdded, t)
-	t.signals.addListener(todoTaskRemoved, t)
+	t.signals.addListener(todoTaskRemoveAnimationDone, t)
 
 	// Resources
 	t.font = NewFont("assets/FiraSans-Regular.ttf", 72, []int{smallTextSize, textSize, largeTextSize})
@@ -132,7 +133,7 @@ func (t *Todo) addTask(_t task) {
 		copy(newSlice[:], t.tasks[:])
 		t.tasks = newSlice
 	}
-	t.tasks = append(t.tasks, newTask)
+	t.tasks[t.count] = newTask
 	t.count += 1
 	t.list.addItem()
 }
@@ -141,7 +142,7 @@ func (t *Todo) OnSignal(s Signal) {
 	switch s.Kind {
 	case todoTaskAdded:
 		t.addTask(s.Value.(task))
-	case todoTaskRemoved:
+	case todoTaskRemoveAnimationDone:
 		// This is always the currently selected one
 		for i := 0; i < t.count; i += 1 {
 			task := &t.tasks[i]

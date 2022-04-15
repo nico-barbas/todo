@@ -127,6 +127,16 @@ func (a *Animation) AddProperty(name string, propertyRef *float64, startValue fl
 	}
 }
 
+func (a *Animation) SetPropertyRef(name string, ref *float64) {
+	for index := range a.properties {
+		property := &a.properties[index]
+		if property.name == name {
+			property.property = ref
+			break
+		}
+	}
+}
+
 func (a *Animation) AddKey(name string, key AnimationKey) {
 	for index := range a.properties {
 		property := &a.properties[index]

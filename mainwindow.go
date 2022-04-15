@@ -9,13 +9,6 @@ import (
 )
 
 const (
-	maxSessionPerLine   = 10
-	sessionCheckPadding = 4
-	sessionCheckHeight  = 600 / (maxSessionPerLine + sessionCheckPadding*2)
-	sessionCheckSize    = sessionCheckHeight - (sessionCheckPadding * 2)
-)
-
-const (
 	settingsBtnID rectID = iota
 	archiveBtnID
 	timerBtnID
@@ -134,7 +127,22 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 			font: m.font, text: task.name, bounds: m.titleRect.remaining,
 			size: largeTextSize, clr: White,
 		})
-		drawRect(dst, m.progressRect.remaining, White)
+		// drawRect(dst, m.progressRect.remaining, White)
+		drawImageSlice(dst, m.progressRect.remaining, rectOutline, rectConstraint, White)
+		// Draw the progress bars here
+		{
+			insideRect := m.progressRect.remaining
+			insideRect.x += 3
+			insideRect.y += 3
+			insideRect.width -= 4
+			insideRect.height -= 6
+			barWidth := (insideRect.width - float64(2*task.sessionRequired)) / float64(task.sessionRequired)
+			xptr := insideRect.x
+			for i := 0; i < task.sessionCompleted; i += 1 {
+				drawRect(dst, rectangle{xptr, insideRect.y, barWidth, insideRect.height}, White)
+				xptr += barWidth + 2
+			}
+		}
 
 		drawTextBtn(dst, m.workTimerRect.remaining, string(task.timer.toString()), largeTextSize)
 
