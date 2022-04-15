@@ -43,9 +43,6 @@ type (
 		mainWindow mainWindow
 
 		// Optional windows data
-		// showAddWindow bool
-		// addWindowRect rectangle
-		// add more fields
 		optWindow optWindow
 
 		signals signalDispatcher
@@ -57,6 +54,7 @@ func (t *Todo) Init() {
 	loadTheme()
 
 	// Caching all the rects possible
+	// and init the subsytems
 	t.tasks = make([]task, 0, initialCap)
 	t.cap = initialCap
 	t.signals.init()
@@ -151,6 +149,7 @@ func (t *Todo) OnSignal(s Signal) {
 				copy(t.tasks[i:], t.tasks[i+1:])
 				t.count -= 1
 				t.list.removeItem(i)
+				t.selected = nil
 				break
 			}
 		}

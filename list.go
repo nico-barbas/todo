@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"todo/anim"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
@@ -8,6 +11,12 @@ import (
 const (
 	itemPadding = 4
 	itemHeight  = textSize + itemPadding*2
+)
+
+const (
+	listItemAddAnimation = iota
+	listItemRemoveAnimation
+	listItemMoveAnimation
 )
 
 type (
@@ -35,6 +44,7 @@ type (
 		rect         rectangle
 		textPosition point
 		checkRect    rectangle
+		animations   [3]anim.Animation
 	}
 )
 
@@ -81,6 +91,12 @@ func (l *listWindow) update(mPos point, mLeft bool) (selected int) {
 		}
 	}
 
+	for i := 0; i < l.count; i += 1 {
+		item := &l.items[i]
+		for i := range item.animations {
+			item.animations[i].Update()
+		}
+	}
 	return
 }
 
@@ -120,11 +136,7 @@ func (l *listWindow) draw(dst *ebiten.Image, tasks []task) {
 		}
 	}
 
-	drawImageSlice(dst, l.addBtnRect, l.rectOutline, l.outlineConstr, White)
-	drawTextCenter(dst, textOptions{
-		font: l.font, text: "NewTask", bounds: l.addBtnRect,
-		size: textSize, clr: White,
-	})
+	drawTextBtn(dst, l.addBtnRect, "NewTask", textSize)
 }
 
 func (l *listWindow) addItem() {
@@ -142,6 +154,33 @@ func (l *listWindow) addItem() {
 	}
 	l.items = append(l.items, i)
 	l.count += 1
+
+	func(li *listItem) {
+		li.animations = [3]anim.Animation{
+			anim.NewAnimation("add", l),
+			anim.NewAnimation("remove", l),
+			anim.NewAnimation("move", l),
+		}
+		li.animations[listItemAddAnimation].AddProperty("rectx", &li.rect.x, -200, false)
+		li.animations[listItemAddAnimation].AddKey("rectx", anim.AnimationKey{
+			Easing:   anim.EaseOutCubic,
+			Duration: anim.SecondsToTicks(0.2),
+			Change:   li.rect.width,
+		})
+		li.animations[listItemAddAnimation].AddProperty("textx", &li.textPosition[0], -200, false)
+		li.animations[listItemAddAnimation].AddKey("textx", anim.AnimationKey{
+			Easing:   anim.EaseOutCubic,
+			Duration: anim.SecondsToTicks(0.2),
+			Change:   li.rect.width,
+		})
+		li.animations[listItemAddAnimation].AddProperty("checkrectx", &li.checkRect.x, li.checkRect.x-200, false)
+		li.animations[listItemAddAnimation].AddKey("checkrectx", anim.AnimationKey{
+			Easing:   anim.EaseOutCubic,
+			Duration: anim.SecondsToTicks(0.2),
+			Change:   li.rect.width,
+		})
+		li.animations[listItemAddAnimation].Play()
+	}(&l.items[l.count-1])
 }
 
 func (l *listWindow) removeItem(at int) {
@@ -154,10 +193,15 @@ func (l *listWindow) orderItems() {
 	for i := 0; i < l.count; i += 1 {
 		rect := rectangle{0, float64(i * itemHeight), 200, itemHeight}
 		textPos := point{rect.x, rect.y + itemPadding}
-		l.items[i] = listItem{
-			rect:         rect,
-			textPosition: textPos,
-			checkRect:    rectangle{(rect.x + rect.width) - itemHeight, textPos[1], textSize, textSize},
-		}
+		l.items[i].rect = rect
+		l.items[i].textPosition = textPos
+		l.items[i].checkRect = rectangle{(rect.x + rect.width) - itemHeight, textPos[1], textSize, textSize}
+	}
+}
+
+func (l *listWindow) OnAnimationEnd(name string) {
+	switch name {
+	case "add":
+		fmt.Println("Finished add")
 	}
 }
