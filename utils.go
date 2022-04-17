@@ -68,8 +68,19 @@ func (c Color) RGBA() (r, g, b, a uint32) {
 	return
 }
 
+func (r rectangle) addPoint(p point) rectangle {
+	return rectangle{
+		x: r.x + p[0], y: r.y + p[1],
+		width: r.width, height: r.height,
+	}
+}
+
 func (r rectangle) boundCheck(p point) bool {
 	return (p[0] >= r.x && p[0] <= r.x+r.width) && (p[1] >= r.y && p[1] <= r.y+r.height)
+}
+
+func (p point) sub(p2 point) point {
+	return point{p[0] - p2[0], p[1] - p2[1]}
 }
 
 type Font struct {
@@ -539,12 +550,12 @@ func (r *rectLayout) cut(cutKind rectCutKind, length float64, padding float64) r
 
 type (
 	rectArray struct {
-		rects []rectElement
-		focus struct {
+		offset point
+		rects  []rectElement
+		focus  struct {
 			active bool
 			rect   rectangle
 		}
-		// focused  rectangle
 		receiver rectReceiver
 	}
 
@@ -565,14 +576,19 @@ func (r *rectArray) init(receiver rectReceiver, cap int) {
 	r.rects = make([]rectElement, 0, cap)
 }
 
+func (r *rectArray) setOffset(p point) {
+	r.offset = p
+}
+
 func (r *rectArray) add(rect rectangle, userID rectID) {
 	r.rects = append(r.rects, rectElement{userID, rect})
 }
 
 func (r *rectArray) update(mPos point, mLeft bool) {
 	r.focus.active = false
+	relPos := mPos.sub(r.offset)
 	for _, rect := range r.rects {
-		if rect.bounds.boundCheck(mPos) {
+		if rect.bounds.boundCheck(relPos) {
 			r.focus.active = true
 			r.focus.rect = rect.bounds
 			if mLeft {
@@ -585,6 +601,6 @@ func (r *rectArray) update(mPos point, mLeft bool) {
 
 func (r *rectArray) highlight(dst *ebiten.Image) {
 	if r.focus.active {
-		drawRect(dst, r.focus.rect, WhiteA125)
+		drawRect(dst, r.focus.rect.addPoint(r.offset), WhiteA125)
 	}
 }
