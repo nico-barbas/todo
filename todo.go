@@ -170,7 +170,7 @@ func FireSignal(k SignalKind, v SignalValue) {
 }
 
 func isInputHandled(mPos point) bool {
-	if todo.addWindow.active && todo.addWindow.rect.boundCheck(mPos) {
+	if todo.addWindow.active && todo.addWindow.rect.remaining.boundCheck(mPos) {
 		return true
 	}
 	return false

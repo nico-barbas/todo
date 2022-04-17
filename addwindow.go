@@ -5,9 +5,10 @@ import (
 )
 
 type addWindow struct {
-	active bool
-	dirty  bool
-	canvas *ebiten.Image
+	active   bool
+	dirty    bool
+	canvas   *ebiten.Image
+	position point
 
 	rect              rectLayout
 	titleRect         rectLayout
@@ -57,11 +58,15 @@ func (a *addWindow) init(font *Font, outline *ebiten.Image) {
 	AddSignalListener(todoAddBtnPressed, a)
 
 	a.rect = newRectLayout(rectangle{
-		x:      windowWidth/2 - 150,
-		y:      windowHeight/2 - 150,
+		x:      0,
+		y:      0,
 		width:  300,
 		height: 300,
 	})
+	a.position = point{
+		windowWidth/2 - 150,
+		windowHeight/2 - 150,
+	}
 	a.rect.cut(rectCutUp, addWindowPadding, 0)
 	a.rect.cut(rectCutDown, addWindowPadding, 0)
 
@@ -352,8 +357,26 @@ func (a *addWindow) redraw() {
 		})
 	}
 
-	a.drawLengthWidget(a.canvas)
-	a.drawCountWidget(a.canvas)
+	drawSlider(
+		a.canvas,
+		a.workLengthRect.remaining,
+		a.incWorkLengthRect, a.decWorkLengthRect,
+		string(a.workLengthText[:]),
+	)
+	drawSlider(
+		a.canvas,
+		a.restLengthRect.remaining,
+		a.incRestLengthRect, a.decRestLengthRect,
+		string(a.restLengthText[:]),
+	)
+	drawSlider(
+		a.canvas,
+		a.countRect.remaining,
+		a.incCountRect, a.decCountRect,
+		string(a.countText[:]),
+	)
+	// a.drawLengthWidget(a.canvas)
+	// a.drawCountWidget(a.canvas)
 
 	// Bottom button to validate the task addition
 	// drawImageSlice(a.canvas, a.addBtnRect, a.rectOutline, a.outlineConstr, White)
@@ -364,68 +387,68 @@ func (a *addWindow) redraw() {
 	drawTextBtn(a.canvas, a.addBtnRect.remaining, "Add", textSize)
 }
 
-func (a *addWindow) drawLengthWidget(dst *ebiten.Image) {
-	// Given the fact that we want to use 2 different font size, we have to
-	// calculate the position by hand and cannot rely on drawTextCenter()
-	//
-	// Session length setting widget
-	drawImageSlice(dst, a.lengthRect, a.rectOutline, a.outlineConstr, White)
-	drawTextCenter(dst, textOptions{
-		font: a.font, text: "<", bounds: a.decrementLengthRect,
-		size: textSize, clr: Color{255, 255, 255, 120},
-	})
-	drawTextCenter(dst, textOptions{
-		font: a.font, text: ">", bounds: a.incrementLengthRect,
-		size: textSize, clr: Color{255, 255, 255, 120},
-	})
-	lSize := a.font.MeasureText(string(a.lengthText[:a.lengthCount]), largeTextSize)[0]
-	tSize := lSize + a.font.MeasureText("min", smallTextSize)[0]
-	textPos := point{
-		a.lengthRect.x + (a.lengthRect.width/2 - tSize/2),
-		a.lengthRect.y + a.font.Ascent(largeTextSize)/2,
-	}
-	drawText(dst, textOptions{
-		font: a.font, text: string(a.lengthText[:a.lengthCount]), pos: textPos,
-		size: largeTextSize, clr: White,
-	})
-	textPos[0] += lSize + 4
-	textPos[1] += (a.font.Ascent(largeTextSize) - a.font.Ascent(smallTextSize))
-	drawText(dst, textOptions{
-		font: a.font, text: "min", pos: textPos,
-		size: smallTextSize, clr: Color{255, 255, 255, 120},
-	})
-}
+// func (a *addWindow) drawLengthWidget(dst *ebiten.Image) {
+// 	// Given the fact that we want to use 2 different font size, we have to
+// 	// calculate the position by hand and cannot rely on drawTextCenter()
+// 	//
+// 	// Session length setting widget
+// 	drawImageSlice(dst, a.lengthRect, a.rectOutline, a.outlineConstr, White)
+// 	drawTextCenter(dst, textOptions{
+// 		font: a.font, text: "<", bounds: a.decrementLengthRect,
+// 		size: textSize, clr: Color{255, 255, 255, 120},
+// 	})
+// 	drawTextCenter(dst, textOptions{
+// 		font: a.font, text: ">", bounds: a.incrementLengthRect,
+// 		size: textSize, clr: Color{255, 255, 255, 120},
+// 	})
+// 	lSize := a.font.MeasureText(string(a.lengthText[:a.lengthCount]), largeTextSize)[0]
+// 	tSize := lSize + a.font.MeasureText("min", smallTextSize)[0]
+// 	textPos := point{
+// 		a.lengthRect.x + (a.lengthRect.width/2 - tSize/2),
+// 		a.lengthRect.y + a.font.Ascent(largeTextSize)/2,
+// 	}
+// 	drawText(dst, textOptions{
+// 		font: a.font, text: string(a.lengthText[:a.lengthCount]), pos: textPos,
+// 		size: largeTextSize, clr: White,
+// 	})
+// 	textPos[0] += lSize + 4
+// 	textPos[1] += (a.font.Ascent(largeTextSize) - a.font.Ascent(smallTextSize))
+// 	drawText(dst, textOptions{
+// 		font: a.font, text: "min", pos: textPos,
+// 		size: smallTextSize, clr: Color{255, 255, 255, 120},
+// 	})
+// }
 
-func (a *addWindow) drawCountWidget(dst *ebiten.Image) {
-	//
-	// Count widget
-	drawImageSlice(dst, a.countRect, a.rectOutline, a.outlineConstr, White)
-	drawTextCenter(dst, textOptions{
-		font: a.font, text: "<", bounds: a.decrementCountRect,
-		size: textSize, clr: Color{255, 255, 255, 120},
-	})
-	drawTextCenter(dst, textOptions{
-		font: a.font, text: ">", bounds: a.incrementCountRect,
-		size: textSize, clr: Color{255, 255, 255, 120},
-	})
-	txt := string(a.countText[:a.countCount])
-	lSize := a.font.MeasureText(txt, largeTextSize)[0]
-	tSize := lSize + a.font.MeasureText("count", smallTextSize)[0]
-	textPos := point{
-		a.countRect.x + (a.countRect.width/2 - tSize/2),
-		a.countRect.y + a.font.Ascent(largeTextSize)/2,
-	}
-	drawText(dst, textOptions{
-		font: a.font, text: txt, pos: textPos,
-		size: largeTextSize, clr: White,
-	})
-	textPos[0] += lSize + 4
-	textPos[1] += (a.font.Ascent(largeTextSize) - a.font.Ascent(smallTextSize))
-	drawText(dst, textOptions{
-		font: a.font, text: "count", pos: textPos,
-		size: smallTextSize, clr: Color{255, 255, 255, 120},
-	})
-}
+// func (a *addWindow) drawCountWidget(dst *ebiten.Image) {
+// 	//
+// 	// Count widget
+// 	drawImageSlice(dst, a.countRect, a.rectOutline, a.outlineConstr, White)
+// 	drawTextCenter(dst, textOptions{
+// 		font: a.font, text: "<", bounds: a.decrementCountRect,
+// 		size: textSize, clr: Color{255, 255, 255, 120},
+// 	})
+// 	drawTextCenter(dst, textOptions{
+// 		font: a.font, text: ">", bounds: a.incrementCountRect,
+// 		size: textSize, clr: Color{255, 255, 255, 120},
+// 	})
+// 	txt := string(a.countText[:a.countCount])
+// 	lSize := a.font.MeasureText(txt, largeTextSize)[0]
+// 	tSize := lSize + a.font.MeasureText("count", smallTextSize)[0]
+// 	textPos := point{
+// 		a.countRect.x + (a.countRect.width/2 - tSize/2),
+// 		a.countRect.y + a.font.Ascent(largeTextSize)/2,
+// 	}
+// 	drawText(dst, textOptions{
+// 		font: a.font, text: txt, pos: textPos,
+// 		size: largeTextSize, clr: White,
+// 	})
+// 	textPos[0] += lSize + 4
+// 	textPos[1] += (a.font.Ascent(largeTextSize) - a.font.Ascent(smallTextSize))
+// 	drawText(dst, textOptions{
+// 		font: a.font, text: "count", pos: textPos,
+// 		size: smallTextSize, clr: Color{255, 255, 255, 120},
+// 	})
+// }
 
 func (a *addWindow) OnSignal(s Signal) {
 	switch s.Kind {
@@ -434,10 +457,17 @@ func (a *addWindow) OnSignal(s Signal) {
 	}
 }
 
-func (a *addWindow) formatLength() {
-	a.lengthCount = numberToString(a.lengthValue, a.lengthText[:])
+func (a *addWindow) isInputHandled(mPos point) bool {
+	r := a.rect.full
+	r.x += a.position[0]
+	r.y += a.position[1]
+	return r.boundCheck(mPos)
 }
 
-func (a *addWindow) formatCount() {
-	a.countCount = numberToString(a.countValue, a.countText[:])
-}
+// func (a *addWindow) formatLength() {
+// 	a.lengthCount = numberToString(a.lengthValue, a.lengthText[:])
+// }
+
+// func (a *addWindow) formatCount() {
+// 	a.countCount = numberToString(a.countValue, a.countText[:])
+// }
