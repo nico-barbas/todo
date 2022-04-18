@@ -55,12 +55,6 @@ func (l *listWindow) init(font *Font, outline *ebiten.Image) {
 	l.rect = newRectLayout(rectangle{0, 0, 200, windowHeight})
 	l.addBtnRect = l.rect.cut(rectCutDown, textSize*2, 0)
 	l.listRect = l.rect.cut(rectCutUp, l.rect.remaining.height, 0)
-	// l.addBtnRect = rectangle{
-	// 	x:      l.rect.x + btnPadding,
-	// 	y:      l.rect.y + l.rect.height - textSize - (10 * 2) - 6,
-	// 	width:  l.rect.width - (btnPadding * 2),
-	// 	height: textSize + (10 * 2),
-	// }
 	l.items = make([]listItem, initialTaskCap)
 	l.cap = initialTaskCap
 

@@ -8,6 +8,7 @@ const (
 type (
 	task struct {
 		name       string
+		id         int
 		done       bool
 		charBuffer []byte
 

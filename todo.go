@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -28,9 +30,10 @@ var todo *Todo
 
 type (
 	Todo struct {
-		tasks []task
-		count int
-		cap   int
+		tasks  []task
+		count  int
+		cap    int
+		taskID int
 
 		selected *task
 
@@ -58,6 +61,9 @@ func (t *Todo) Init() {
 	// and init the subsytems
 	t.tasks = make([]task, initialTaskCap)
 	t.cap = initialTaskCap
+
+	tnow := time.Now()
+	t.taskID = tnow.Year() + int(tnow.Month()) + tnow.Day() + tnow.Hour() + tnow.Minute()
 	t.signals.init()
 
 	t.signals.addListener(todoTaskAdded, t)
@@ -127,6 +133,7 @@ func (t *Todo) Layout(outW, outH int) (int, int) {
 
 func (t *Todo) addTask(_t task) {
 	newTask := _t
+	newTask.id = t.genID()
 	newTask.init()
 	if t.count > len(t.tasks) {
 		newSlice := make([]task, t.cap*2)
@@ -146,7 +153,7 @@ func (t *Todo) OnSignal(s Signal) {
 		// This is always the currently selected one
 		for i := 0; i < t.count; i += 1 {
 			task := &t.tasks[i]
-			if task.name == t.selected.name {
+			if task.id == t.selected.id {
 				copy(t.tasks[i:], t.tasks[i+1:])
 				t.count -= 1
 				t.list.removeItem(i)
@@ -155,6 +162,10 @@ func (t *Todo) OnSignal(s Signal) {
 			}
 		}
 	}
+}
+func (t *Todo) genID() int {
+	t.taskID += 1
+	return t.taskID
 }
 
 // Static wrapper over the signal dispatcher
