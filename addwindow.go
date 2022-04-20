@@ -36,7 +36,6 @@ type addWindow struct {
 	countValue   int
 	countBuf     [3]rune
 	countText    string
-	// countTextRect      rectangle
 
 	workLengthRect    rectLayout
 	incWorkLengthRect rectangle
@@ -44,7 +43,6 @@ type addWindow struct {
 	workLengthValue   int
 	workLengthBuf     [3]rune
 	workLengthText    string
-	// lengthTextRect      rectangle
 
 	restLengthRect    rectLayout
 	incRestLengthRect rectangle
@@ -52,10 +50,7 @@ type addWindow struct {
 	restLengthValue   int
 	restLengthBuf     [3]rune
 	restLengthText    string
-	// lengthTextRect      rectangle
 
-	// shouldHighlight bool
-	// highlightRect   rectangle
 	elements rectArray
 
 	// resources
@@ -327,6 +322,7 @@ func (a *addWindow) onClick(userID rectID) {
 				name:            name,
 				sessionRequired: a.countValue,
 				sessionLength:   minute(a.workLengthValue),
+				restLength:      minute(a.restLengthValue),
 			},
 		)
 		a.nameInputSelected = false

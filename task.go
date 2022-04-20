@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 const (
 	minSessionLength minute = 1
 	minSessionCount  int    = 1
@@ -15,6 +17,7 @@ type (
 		sessionRequired  int
 		sessionCompleted int
 		sessionLength    minute
+		restLength       minute
 
 		timer timer
 	}
@@ -39,4 +42,11 @@ func (t *task) startWork() {
 
 func (t task) ToString() string {
 	return "task"
+}
+
+func (t task) progress() float64 {
+	sProg := float64(t.timer.sec) / 60
+	prog := (float64(t.timer.min) + sProg)
+	fmt.Println(prog)
+	return prog/float64(t.sessionLength) - 1
 }

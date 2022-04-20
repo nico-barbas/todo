@@ -121,19 +121,21 @@ func (l *listWindow) update(mPos point, mLeft bool) (selected int) {
 
 func (l *listWindow) draw(dst *ebiten.Image, tasks []task) {
 	if l.shouldHighlight {
-		ebitenutil.DrawRect(
-			dst,
-			l.highlightRect.x,
-			l.highlightRect.y,
-			l.highlightRect.width,
-			l.highlightRect.height,
-			Color{255, 255, 255, 120},
-		)
+		drawRect(dst, l.highlightRect, WhiteA125)
 	}
 
 	for i := 0; i < l.count; i += 1 {
 		item := &l.items[i]
 		task := &tasks[i]
+
+		// Draw progress in case it is running
+		if task.timer.running {
+			progress := task.progress()
+			drawRect(dst, rectangle{
+				item.rect.x, item.rect.y,
+				item.rect.width * progress, item.rect.height,
+			}, WhiteA125)
+		}
 
 		drawText(dst, textOptions{
 			font: l.font, text: task.name, pos: item.textPosition,
