@@ -108,12 +108,7 @@ func (t *Todo) Update() error {
 	// Advance all the timer and check for completed sessions
 	for i := 0; i < t.count; i += 1 {
 		task := &t.tasks[i]
-		if task.timer.running {
-			if finished := task.timer.advance(); finished {
-				task.completeSession()
-				task.timer.setDuration(task.sessionLength, 0)
-			}
-		}
+		task.update()
 	}
 
 	return nil
@@ -151,7 +146,6 @@ func (t *Todo) OnSignal(s Signal) {
 	case todoTaskAdded:
 		t.addTask(s.Value.(task))
 	case todoTaskStarted:
-		t.selected.resetDuration()
 		t.selected.startWork()
 	case todoTaskStopped:
 		t.selected.stopWork()

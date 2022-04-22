@@ -153,9 +153,23 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 			}
 		}
 
-		drawTextBtn(dst, m.workTimerRect.remaining, string(task.timer.toString()), largeTextSize)
+		if task.isWorkInProgress() {
+			progress := task.progress()
+			drawRect(dst, rectangle{
+				m.workTimerRect.remaining.x, m.workTimerRect.remaining.y,
+				m.workTimerRect.remaining.width * progress, m.workTimerRect.remaining.height,
+			}, WhiteA125)
+		}
+		drawTextBtn(dst, m.workTimerRect.remaining, task.getWorkTime(), largeTextSize)
 
-		drawTextBtn(dst, m.restTimerRect.remaining, string(task.timer.toString()), largeTextSize)
+		if task.isRestInProgress() {
+			progress := task.progress()
+			drawRect(dst, rectangle{
+				m.restTimerRect.remaining.x, m.restTimerRect.remaining.y,
+				m.restTimerRect.remaining.width * progress, m.restTimerRect.remaining.height,
+			}, WhiteA125)
+		}
+		drawTextBtn(dst, m.restTimerRect.remaining, task.getRestTime(), largeTextSize)
 
 		// Could probably cache this string
 		// maybe no allocations are even happening.. who knows

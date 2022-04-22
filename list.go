@@ -129,7 +129,7 @@ func (l *listWindow) draw(dst *ebiten.Image, tasks []task) {
 		task := &tasks[i]
 
 		// Draw progress in case it is running
-		if task.timer.running {
+		if task.isInProgress() {
 			progress := task.progress()
 			drawRect(dst, rectangle{
 				item.rect.x, item.rect.y,

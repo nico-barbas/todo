@@ -396,9 +396,9 @@ func (t *timer) updateString() {
 	t.buf[2] = ':'
 }
 
-func (t timer) toString() []rune {
-	return t.buf[:]
-}
+// func (t timer) toString() []rune {
+// 	return t.buf[:]
+// }
 
 func numberToString(n int, buf []rune) (last int) {
 	toChar := func(n int) (r rune) {
