@@ -15,6 +15,11 @@ const (
 	archiveTaskBtnID
 )
 
+const (
+	timerStartStr = "Start"
+	timerStopStr  = "Stop"
+)
+
 type mainWindow struct {
 	rect                rectLayout
 	settingsBtnRect     rectLayout
@@ -30,7 +35,7 @@ type mainWindow struct {
 	settingElements rectArray
 	infoElements    rectArray
 
-	timerBtnPressed bool
+	timerStr string
 
 	font          *Font
 	rectOutline   *ebiten.Image
@@ -93,15 +98,19 @@ func (m *mainWindow) init(font *Font, outline *ebiten.Image) {
 	m.settingsIcon, _, _ = ebitenutil.NewImageFromFile("assets/icon-settings.png")
 }
 
-func (m *mainWindow) update(mPos point, mLeft bool, selected bool) (startTask bool) {
-	m.timerBtnPressed = false
+func (m *mainWindow) update(mPos point, mLeft bool, task *task) {
 	if !isInputHandled(mPos) {
-		if selected {
+		if task != nil {
 			m.infoElements.update(mPos, mLeft)
+			switch task.timer.running {
+			case true:
+				m.timerStr = timerStopStr
+			case false:
+				m.timerStr = timerStartStr
+			}
 		}
 		m.settingElements.update(mPos, mLeft)
 	}
-	return m.timerBtnPressed
 }
 
 func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
@@ -148,7 +157,9 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 
 		drawTextBtn(dst, m.restTimerRect.remaining, string(task.timer.toString()), largeTextSize)
 
-		drawTextBtn(dst, m.timerBtnRect.remaining, "Start Timer", textSize)
+		// Could probably cache this string
+		// maybe no allocations are even happening.. who knows
+		drawTextBtn(dst, m.timerBtnRect.remaining, m.timerStr+" Timer", textSize)
 
 		drawTextBtn(dst, m.archiveTaskBtnRect.remaining, "Archive Task", textSize)
 		drawIcontBtn(dst, m.taskSettingsBtnRect.remaining, m.archiveIcon)
@@ -158,7 +169,12 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 func (m *mainWindow) onClick(userID rectID) {
 	switch userID {
 	case timerBtnID:
-		m.timerBtnPressed = true
+		switch m.timerStr {
+		case timerStartStr:
+			FireSignal(todoTaskStarted, SignalNoArgs)
+		case timerStopStr:
+			FireSignal(todoTaskStopped, SignalNoArgs)
+		}
 	case archiveTaskBtnID:
 		FireSignal(todoTaskRemoved, SignalNoArgs)
 	}

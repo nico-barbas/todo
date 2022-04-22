@@ -331,6 +331,10 @@ func (t *timer) start() {
 	t.running = true
 }
 
+func (t *timer) stop() {
+	t.running = false
+}
+
 func (t *timer) advance() (finished bool) {
 	const tps = 5
 	finished = false

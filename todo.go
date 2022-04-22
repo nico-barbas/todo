@@ -24,6 +24,8 @@ const (
 	todoTaskAdded
 	todoTaskRemoved
 	todoTaskRemoveAnimationDone
+	todoTaskStarted
+	todoTaskStopped
 )
 
 var todo *Todo
@@ -67,6 +69,8 @@ func (t *Todo) Init() {
 	t.signals.init()
 
 	t.signals.addListener(todoTaskAdded, t)
+	t.signals.addListener(todoTaskStarted, t)
+	t.signals.addListener(todoTaskStopped, t)
 	t.signals.addListener(todoTaskRemoveAnimationDone, t)
 
 	// Resources
@@ -99,10 +103,7 @@ func (t *Todo) Update() error {
 		t.selected = &t.tasks[selected]
 	}
 
-	startWork := t.mainWindow.update(mPos, mLeft, t.selected != nil)
-	if startWork {
-		t.selected.startWork()
-	}
+	t.mainWindow.update(mPos, mLeft, t.selected)
 
 	// Advance all the timer and check for completed sessions
 	for i := 0; i < t.count; i += 1 {
@@ -149,6 +150,11 @@ func (t *Todo) OnSignal(s Signal) {
 	switch s.Kind {
 	case todoTaskAdded:
 		t.addTask(s.Value.(task))
+	case todoTaskStarted:
+		t.selected.resetDuration()
+		t.selected.startWork()
+	case todoTaskStopped:
+		t.selected.stopWork()
 	case todoTaskRemoveAnimationDone:
 		// This is always the currently selected one
 		for i := 0; i < t.count; i += 1 {
