@@ -97,6 +97,12 @@ type (
 	}
 
 	taskState int
+
+	taskBuffer struct {
+		items []task
+		count int
+		cap   int
+	}
 )
 
 func (t *task) init() {
@@ -208,4 +214,47 @@ func (t *task) getRestTime() string {
 	}
 	t.restText[2] = ':'
 	return string(t.restText[:])
+}
+
+func newTaskBuffer() taskBuffer {
+	return taskBuffer{
+		items: make([]task, initialTaskCap),
+		cap:   initialTaskCap,
+	}
+}
+
+func (t *taskBuffer) addTask(newTask task) {
+	if t.count > len(t.items) {
+		newSlice := make([]task, t.cap*2)
+		copy(newSlice[:], t.items[:])
+		t.items = newSlice
+	}
+	t.items[t.count] = newTask
+	t.count += 1
+}
+
+func (t *taskBuffer) removeTask(id int) (at int) {
+	for i := 0; i < t.count; i += 1 {
+		task := &t.items[i]
+		if task.id == id {
+			copy(t.items[i:], t.items[i+1:])
+			t.count -= 1
+			return i
+		}
+	}
+	return -1
+}
+
+func (t *taskBuffer) getTask(at int) *task {
+	return &t.items[at]
+}
+
+func (t *taskBuffer) copyTask(id int) task {
+	for i := 0; i < t.count; i += 1 {
+		task := &t.items[i]
+		if task.id == id {
+			return t.items[i]
+		}
+	}
+	return task{}
 }

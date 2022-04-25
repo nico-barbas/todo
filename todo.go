@@ -32,10 +32,9 @@ var todo *Todo
 
 type (
 	Todo struct {
-		tasks  []task
-		count  int
-		cap    int
-		taskID int
+		tasks   taskBuffer
+		archive taskBuffer
+		taskID  int
 
 		selected *task
 
@@ -51,6 +50,9 @@ type (
 		// Optional windows data
 		addWindow addWindow
 
+		// Archive window
+		archiveWindow archiveWindow
+
 		signals signalDispatcher
 	}
 )
@@ -61,8 +63,7 @@ func (t *Todo) Init() {
 
 	// Caching all the rects possible
 	// and init the subsytems
-	t.tasks = make([]task, initialTaskCap)
-	t.cap = initialTaskCap
+	t.tasks = newTaskBuffer()
 
 	tnow := time.Now()
 	t.taskID = tnow.Year() + int(tnow.Month()) + tnow.Day() + tnow.Hour() + tnow.Minute()
@@ -85,6 +86,9 @@ func (t *Todo) Init() {
 
 	// Add window
 	t.addWindow.init(&t.font, t.rectOutline)
+
+	// Add archive window
+	t.archiveWindow.init(&t.font, t.rectOutline)
 }
 
 func (t *Todo) Update() error {
@@ -100,14 +104,14 @@ func (t *Todo) Update() error {
 
 	selected := t.list.update(mPos, mLeft)
 	if selected >= 0 {
-		t.selected = &t.tasks[selected]
+		t.selected = t.tasks.getTask(selected)
 	}
 
 	t.mainWindow.update(mPos, mLeft, t.selected)
 
 	// Advance all the timer and check for completed sessions
-	for i := 0; i < t.count; i += 1 {
-		task := &t.tasks[i]
+	for i := 0; i < t.tasks.count; i += 1 {
+		task := t.tasks.getTask(i)
 		task.update()
 	}
 
@@ -116,11 +120,12 @@ func (t *Todo) Update() error {
 
 func (t *Todo) Draw(screen *ebiten.Image) {
 	screen.Fill(darkBackground1)
-	t.list.draw(screen, t.tasks[:t.count])
+	t.list.draw(screen, t.tasks.items[:t.tasks.count])
 
 	t.mainWindow.draw(screen, t.selected)
 
 	t.addWindow.draw(screen)
+	t.archiveWindow.draw(screen)
 }
 
 func (t *Todo) Layout(outW, outH int) (int, int) {
@@ -131,13 +136,7 @@ func (t *Todo) addTask(_t task) {
 	newTask := _t
 	newTask.id = t.genID()
 	newTask.init()
-	if t.count > len(t.tasks) {
-		newSlice := make([]task, t.cap*2)
-		copy(newSlice[:], t.tasks[:])
-		t.tasks = newSlice
-	}
-	t.tasks[t.count] = newTask
-	t.count += 1
+	t.tasks.addTask(newTask)
 	t.list.addItem()
 }
 
@@ -151,18 +150,16 @@ func (t *Todo) OnSignal(s Signal) {
 		t.selected.stopWork()
 	case todoTaskRemoveAnimationDone:
 		// This is always the currently selected one
-		for i := 0; i < t.count; i += 1 {
-			task := &t.tasks[i]
-			if task.id == t.selected.id {
-				copy(t.tasks[i:], t.tasks[i+1:])
-				t.count -= 1
-				t.list.removeItem(i)
-				t.selected = nil
-				break
-			}
+		copied := t.tasks.copyTask(t.selected.id)
+		at := t.tasks.removeTask(t.selected.id)
+		if at > -1 {
+			t.list.removeItem(at)
+			t.selected = nil
+			t.archive.addTask(copied)
 		}
 	}
 }
+
 func (t *Todo) genID() int {
 	t.taskID += 1
 	return t.taskID
