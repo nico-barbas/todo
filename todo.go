@@ -21,6 +21,7 @@ const (
 
 const (
 	todoAddBtnPressed SignalKind = iota
+	todoArchiveBtnPressed
 	todoTaskAdded
 	todoTaskRemoved
 	todoTaskRemoveAnimationDone
@@ -64,6 +65,7 @@ func (t *Todo) Init() {
 	// Caching all the rects possible
 	// and init the subsytems
 	t.tasks = newTaskBuffer()
+	t.archive = newTaskBuffer()
 
 	tnow := time.Now()
 	t.taskID = tnow.Year() + int(tnow.Month()) + tnow.Day() + tnow.Hour() + tnow.Minute()
@@ -101,6 +103,7 @@ func (t *Todo) Update() error {
 	mLeft := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 
 	t.addWindow.update(mPos, mLeft)
+	t.archiveWindow.update(mPos, mLeft)
 
 	selected := t.list.update(mPos, mLeft)
 	if selected >= 0 {
@@ -125,7 +128,7 @@ func (t *Todo) Draw(screen *ebiten.Image) {
 	t.mainWindow.draw(screen, t.selected)
 
 	t.addWindow.draw(screen)
-	t.archiveWindow.draw(screen)
+	t.archiveWindow.draw(screen, t.archive.items[:t.archive.count])
 }
 
 func (t *Todo) Layout(outW, outH int) (int, int) {
@@ -154,6 +157,7 @@ func (t *Todo) OnSignal(s Signal) {
 		at := t.tasks.removeTask(t.selected.id)
 		if at > -1 {
 			t.list.removeItem(at)
+			t.archiveWindow.addItem()
 			t.selected = nil
 			t.archive.addTask(copied)
 		}

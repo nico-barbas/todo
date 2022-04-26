@@ -182,6 +182,8 @@ func (m *mainWindow) draw(dst *ebiten.Image, task *task) {
 
 func (m *mainWindow) onClick(userID rectID) {
 	switch userID {
+	case archiveBtnID:
+		FireSignal(todoArchiveBtnPressed, SignalNoArgs)
 	case timerBtnID:
 		switch m.timerStr {
 		case timerStartStr:
