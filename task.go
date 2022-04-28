@@ -155,10 +155,17 @@ func (t task) ToString() string {
 	return "task"
 }
 
-func (t task) progress() float64 {
+func (t task) progress() (prog float64) {
 	sProg := float64(t.timer.sec) / 60
-	prog := math.Abs((float64(t.timer.min) + sProg) - float64(t.sessionLength))
-	return prog / float64(t.sessionLength)
+	prog = (float64(t.timer.min) + sProg)
+	switch {
+	case t.isWorkInProgress():
+		prog -= float64(t.sessionLength)
+	case t.isRestInProgress():
+		prog -= float64(t.restLength)
+	}
+	prog = math.Abs(prog) / float64(t.sessionLength)
+	return
 }
 
 func (t task) isInProgress() bool {
