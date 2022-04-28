@@ -218,7 +218,7 @@ func (t *task) getRestTime() string {
 			numberToString(int(t.timer.min), t.restText[:])
 			numberToString(int(t.timer.sec), t.restText[3:])
 		} else {
-			numberToString(int(t.sessionLength), t.restText[:])
+			numberToString(int(t.restLength), t.restText[:])
 			numberToString(0, t.restText[3:])
 		}
 	default:
