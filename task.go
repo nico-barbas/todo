@@ -134,10 +134,15 @@ func (t *task) completeSession() {
 }
 
 func (t *task) startWork() {
-	switch t.previousState {
-	case taskStateRest:
-		t.changeState(taskStateRest)
-	default:
+	if t.state == taskStatePaused {
+		switch t.previousState {
+		case taskStateWork:
+			t.changeState(taskStateWork)
+
+		case taskStateRest:
+			t.changeState(taskStateRest)
+		}
+	} else {
 		t.changeState(taskStateWork)
 	}
 }
@@ -209,7 +214,7 @@ func (t *task) getRestTime() string {
 			numberToString(0, t.restText[3:])
 		}
 	default:
-		numberToString(int(t.sessionLength), t.restText[:])
+		numberToString(int(t.restLength), t.restText[:])
 		numberToString(0, t.restText[3:])
 	}
 	t.restText[2] = ':'
