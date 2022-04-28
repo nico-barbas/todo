@@ -161,10 +161,11 @@ func (t task) progress() (prog float64) {
 	switch {
 	case t.isWorkInProgress():
 		prog -= float64(t.sessionLength)
+		prog = math.Abs(prog) / float64(t.sessionLength)
 	case t.isRestInProgress():
 		prog -= float64(t.restLength)
+		prog = math.Abs(prog) / float64(t.restLength)
 	}
-	prog = math.Abs(prog) / float64(t.sessionLength)
 	return
 }
 
