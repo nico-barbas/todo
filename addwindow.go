@@ -148,6 +148,7 @@ func (a *addWindow) update(mPos point, mLeft bool) {
 		relPos := mPos.sub(a.position)
 		if !a.rect.full.boundCheck(relPos) && mLeft {
 			a.active = false
+			FireSignal(todoAddWindowClosed, SignalNoArgs)
 			return
 		}
 		a.elements.update(mPos, mLeft)

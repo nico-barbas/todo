@@ -21,7 +21,9 @@ const (
 
 const (
 	todoAddBtnPressed SignalKind = iota
+	todoAddWindowClosed
 	todoArchiveBtnPressed
+	todoArchiveWindowClosed
 	todoTaskAdded
 	todoTaskRemoved
 	todoTaskRemoveAnimationDone
@@ -37,7 +39,9 @@ type (
 		archive taskBuffer
 		taskID  int
 
-		selected *task
+		selected   *task
+		windowOpen bool
+		windowRect rectangle
 
 		font        Font
 		rectOutline *ebiten.Image
@@ -71,6 +75,10 @@ func (t *Todo) Init() {
 	t.taskID = tnow.Year() + int(tnow.Month()) + tnow.Day() + tnow.Hour() + tnow.Minute()
 	t.signals.init()
 
+	t.signals.addListener(todoAddBtnPressed, t)
+	t.signals.addListener(todoAddWindowClosed, t)
+	t.signals.addListener(todoArchiveBtnPressed, t)
+	t.signals.addListener(todoArchiveWindowClosed, t)
 	t.signals.addListener(todoTaskAdded, t)
 	t.signals.addListener(todoTaskStarted, t)
 	t.signals.addListener(todoTaskStopped, t)
@@ -145,6 +153,18 @@ func (t *Todo) addTask(_t task) {
 
 func (t *Todo) OnSignal(s Signal) {
 	switch s.Kind {
+	case todoAddBtnPressed:
+		t.windowOpen = true
+		t.windowRect = t.addWindow.rect.full
+	case todoAddWindowClosed:
+		t.windowOpen = false
+		t.windowRect = rectangle{}
+	case todoArchiveBtnPressed:
+		t.windowOpen = true
+		t.windowRect = t.archiveWindow.rect.full
+	case todoArchiveWindowClosed:
+		t.windowOpen = false
+		t.windowRect = rectangle{}
 	case todoTaskAdded:
 		t.addTask(s.Value.(task))
 	case todoTaskStarted:
@@ -182,7 +202,7 @@ func FireSignal(k SignalKind, v SignalValue) {
 }
 
 func isInputHandled(mPos point) bool {
-	if todo.addWindow.active && todo.addWindow.rect.remaining.boundCheck(mPos) {
+	if todo.windowOpen && todo.windowRect.boundCheck(mPos) {
 		return true
 	}
 	return false

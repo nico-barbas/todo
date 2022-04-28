@@ -512,6 +512,22 @@ func newRectLayout(rect rectangle) rectLayout {
 	}
 }
 
+func (r *rectLayout) x() float64 {
+	return r.remaining.x
+}
+
+func (r *rectLayout) y() float64 {
+	return r.remaining.y
+}
+
+func (r *rectLayout) width() float64 {
+	return r.remaining.width
+}
+
+func (r *rectLayout) height() float64 {
+	return r.remaining.height
+}
+
 func (r *rectLayout) cut(cutKind rectCutKind, length float64, padding float64) rectLayout {
 	var result rectangle
 	switch cutKind {

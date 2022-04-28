@@ -29,6 +29,7 @@ type (
 		offset           point
 		rect             rectLayout
 		nameRect         rectangle
+		textPosition     point
 		finishedRect     rectangle
 		archivedDateRect rectangle
 	}
@@ -79,6 +80,7 @@ func (a *archiveWindow) update(mPos point, mLeft bool) {
 		relPos := mPos.sub(a.position)
 		if !a.rect.full.boundCheck(relPos) && mLeft {
 			a.active = false
+			FireSignal(todoArchiveWindowClosed, SignalNoArgs)
 			return
 		}
 	}
@@ -121,8 +123,8 @@ func (a *archiveWindow) redraw(archivedTasks []task) {
 		item := &a.items[i]
 		task := &archivedTasks[i]
 
-		drawTextCenter(a.canvas, textOptions{
-			font: a.font, text: task.name, bounds: item.nameRect,
+		drawText(a.canvas, textOptions{
+			font: a.font, text: task.name, pos: item.textPosition,
 			size: textSize, clr: White,
 		})
 		drawRect(
@@ -150,6 +152,7 @@ func (a *archiveWindow) addItem() {
 		rect:     rect,
 		nameRect: rect.cut(rectCutLeft, rect.remaining.width-100, 10).full,
 	}
+	item.textPosition = point{item.nameRect.x + itemPadding, item.nameRect.y + (item.nameRect.height-a.font.Ascent(textSize))/2}
 	if a.count > len(a.items) {
 		newSlice := make([]archiveItem, a.cap*2)
 		copy(newSlice[:], a.items[:])
