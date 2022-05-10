@@ -18,9 +18,13 @@ var (
 	rectOutline    *ebiten.Image
 	rectConstraint = constraint{2, 2, 2, 2}
 	defaultFont    Font
+	timerWorkIcon  *ebiten.Image
+	timerRestIcon  *ebiten.Image
 )
 
 func loadTheme() {
 	rectOutline, _, _ = ebitenutil.NewImageFromFile("assets/uiRectOutline.png")
 	defaultFont = NewFont("assets/FiraSans-Regular.ttf", 72, []int{smallTextSize, textSize, largeTextSize})
+	timerWorkIcon, _, _ = ebitenutil.NewImageFromFile("assets/icon-work-timer.png")
+	timerRestIcon, _, _ = ebitenutil.NewImageFromFile("assets/icon-rest-timer.png")
 }

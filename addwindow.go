@@ -192,7 +192,7 @@ func (a *addWindow) draw(dst *ebiten.Image) {
 			a.redraw()
 			a.dirty = false
 		}
-		drawImage(dst, a.canvas, a.position)
+		drawImage(dst, a.canvas, a.position, White)
 	}
 }
 
@@ -335,6 +335,7 @@ func (a *addWindow) onClick(userID rectID) {
 		a.nameInput.Clear()
 		a.dirty = true
 		a.active = false
+		FireSignal(todoAddWindowClosed, SignalNoArgs)
 	}
 }
 

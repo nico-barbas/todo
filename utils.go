@@ -179,9 +179,17 @@ func drawTextCenter(dst *ebiten.Image, opt textOptions) {
 	)
 }
 
-func drawImage(dst, src *ebiten.Image, p point) {
+func drawImage(dst, src *ebiten.Image, p point, clr Color) {
 	opt := ebiten.DrawImageOptions{}
 	opt.GeoM.Translate(p[0], p[1])
+	opt.Filter = ebiten.FilterLinear
+	r, g, b, a := clr.RGBA()
+	opt.ColorM.Scale(
+		float64(r)/float64(a),
+		float64(g)/float64(a),
+		float64(b)/float64(a),
+		float64(a)/0xffff,
+	)
 	dst.DrawImage(src, &opt)
 }
 

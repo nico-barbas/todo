@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"todo/anim"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -68,10 +67,6 @@ func (l *listWindow) update(mPos point, mLeft bool) (selected int) {
 	l.shouldHighlight = false
 	l.previousHovered = l.hovered
 	l.hovered = nil
-
-	if ebiten.IsKeyPressed(ebiten.KeySpace) {
-		fmt.Println("")
-	}
 
 	if l.rect.full.boundCheck(mPos) {
 		index := int(mPos[1] / itemHeight)

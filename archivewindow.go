@@ -107,7 +107,7 @@ func (a *archiveWindow) draw(dst *ebiten.Image, archivedTasks []task) {
 		if a.dirty {
 			a.redraw(archivedTasks)
 		}
-		drawImage(dst, a.canvas, a.position)
+		drawImage(dst, a.canvas, a.position, White)
 	}
 }
 

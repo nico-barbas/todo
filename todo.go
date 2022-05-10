@@ -62,6 +62,8 @@ type (
 	}
 )
 
+func a(i int) {}
+
 func (t *Todo) Init() {
 	todo = t
 	loadTheme()
@@ -155,13 +157,13 @@ func (t *Todo) OnSignal(s Signal) {
 	switch s.Kind {
 	case todoAddBtnPressed:
 		t.windowOpen = true
-		t.windowRect = t.addWindow.rect.full
+		t.windowRect = t.addWindow.rect.full.addPoint(t.addWindow.position)
 	case todoAddWindowClosed:
 		t.windowOpen = false
 		t.windowRect = rectangle{}
 	case todoArchiveBtnPressed:
 		t.windowOpen = true
-		t.windowRect = t.archiveWindow.rect.full
+		t.windowRect = t.archiveWindow.rect.full.addPoint(t.archiveWindow.position)
 	case todoArchiveWindowClosed:
 		t.windowOpen = false
 		t.windowRect = rectangle{}
